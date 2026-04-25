@@ -2,54 +2,68 @@
 //  CurrentUserManager.swift
 //  BillSplitter
 //
+//  Single source of truth for the "me" User record.
+//  Key "currentUserID" is shared with @AppStorage in all views.
+//
 
-import SwiftUI
 import SwiftData
+import Foundation
 
-/// Fetches (or lazily creates) the single "me" User record.
-/// Inject via .environment(\.currentUserManager, ...) or as an @Observable.
-@Observable
-final class CurrentUserManager {
+enum CurrentUserManager {
 
-    /// The persisted User record for "me". Nil until `resolve()` is called.
-    private(set) var me: User?
+    static let idKey    = "currentUserID"
+    static let nameKey  = "userName"
+    static let colorKey = "userColor"
 
-    /// Key used to persist the current user's UUID across launches.
-    private let key = "currentUserID"
+    @discardableResult
+    static func resolve(in container: ModelContainer) -> User {
+        let context = container.mainContext
 
-    func resolve(in context: ModelContext) {
-        // 1. Try to find an existing UUID stored in UserDefaults
-        if let raw  = UserDefaults.standard.string(forKey: key),
-           let uuid = UUID(uuidString: raw) {
-            // 2. Fetch that User from SwiftData
-            let descriptor = FetchDescriptor<User>(
-                predicate: #Predicate { $0.id == uuid }
-            )
-            if let found = try? context.fetch(descriptor).first {
-                me = found
-                return
-            }
+        // Fetch ALL users with NO predicate.
+        // A predicate fetch can silently return empty on an unhydrated
+        // context (which happens when called from App.init), causing a
+        // duplicate User to be created on every launch.
+        let allUsers = (try? context.fetch(FetchDescriptor<User>())) ?? []
+
+        // 1. Stored UUID matches an existing record → done
+        if let raw  = UserDefaults.standard.string(forKey: idKey),
+           let uuid = UUID(uuidString: raw),
+           let me   = allUsers.first(where: { $0.id == uuid }) {
+            return me
         }
 
-        // 3. No existing user — create one with stored name/color prefs
-        let name  = UserDefaults.standard.string(forKey: "userName")  ?? "You"
-        let color = UserDefaults.standard.string(forKey: "userColor") ?? "#00BCD4"
-        let newUser = User(name: name, profileColor: color)
-        context.insert(newUser)
+        // 2. Users exist but UUID is missing/stale (e.g. after reinstall)
+        //    Adopt the first user rather than creating a duplicate.
+        if let existing = allUsers.first {
+            UserDefaults.standard.set(existing.id.uuidString, forKey: idKey)
+            UserDefaults.standard.set(existing.name,          forKey: nameKey)
+            UserDefaults.standard.set(existing.profileColor,  forKey: colorKey)
+            UserDefaults.standard.synchronize()
+            return existing
+        }
+
+        // 3. Truly first launch — create the User record
+        let name  = UserDefaults.standard.string(forKey: nameKey)  ?? "You"
+        let color = UserDefaults.standard.string(forKey: colorKey) ?? "#00BCD4"
+        let me    = User(name: name, profileColor: color)
+        context.insert(me)
         try? context.save()
 
-        // 4. Persist the UUID
-        UserDefaults.standard.set(newUser.id.uuidString, forKey: key)
-        me = newUser
+        UserDefaults.standard.set(me.id.uuidString, forKey: idKey)
+        UserDefaults.standard.synchronize()
+        return me
     }
 
-    /// Call whenever the user changes their name/color in ProfileView.
-    func updateProfile(name: String, color: String, in context: ModelContext) {
-        guard let me else { return }
+    static func updateProfile(name: String, color: String, in context: ModelContext) {
+        let allUsers = (try? context.fetch(FetchDescriptor<User>())) ?? []
+        guard let raw = UserDefaults.standard.string(forKey: idKey),
+              let uuid = UUID(uuidString: raw),
+              let me   = allUsers.first(where: { $0.id == uuid }) else { return }
         me.name         = name
         me.profileColor = color
         try? context.save()
-        UserDefaults.standard.set(name,  forKey: "userName")
-        UserDefaults.standard.set(color, forKey: "userColor")
+        UserDefaults.standard.set(name,  forKey: nameKey)
+        UserDefaults.standard.set(color, forKey: colorKey)
+        UserDefaults.standard.synchronize()
     }
 }
