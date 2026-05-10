@@ -9,6 +9,7 @@
 import SwiftUI
 import SwiftData
 import PhotosUI
+import UIKit
 
 // MARK: - Shared Form Sections
 
@@ -67,6 +68,8 @@ struct ExpenseFormSections {
                                 .stroke(category.wrappedValue == cat ? Color.cyan : .clear, lineWidth: 1.5))
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("\(cat.label) category")
+                        .accessibilityAddTraits(category.wrappedValue == cat ? .isSelected : [])
                     }
                 }
                 .padding(.vertical, 4)
@@ -316,20 +319,14 @@ struct ExpenseFormSections {
                     // Compress to JPEG to save storage
                     if let uiImage = UIImage(data: data),
                        let jpeg = uiImage.jpegData(compressionQuality: 0.7) {
-                        await MainActor.run {
-                            receiptImageData.wrappedValue = jpeg
-                            isLoadingImage.wrappedValue = false
-                        }
+                        receiptImageData.wrappedValue = jpeg
+                        isLoadingImage.wrappedValue = false
                     } else {
-                        await MainActor.run {
-                            receiptImageData.wrappedValue = data
-                            isLoadingImage.wrappedValue = false
-                        }
-                    }
-                } else {
-                    await MainActor.run {
+                        receiptImageData.wrappedValue = data
                         isLoadingImage.wrappedValue = false
                     }
+                } else {
+                    isLoadingImage.wrappedValue = false
                 }
             }
         }

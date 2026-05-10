@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 import os
 
 struct SettleUpView: View {
@@ -20,6 +21,7 @@ struct SettleUpView: View {
     @State private var notes           = ""
     @State private var date            = Date()
     @State private var saveError       = SaveErrorState()
+    @State private var showSuccess     = false
 
     let prefilledFrom:   User?
     let prefilledTo:     User?
@@ -66,6 +68,7 @@ struct SettleUpView: View {
             }
             .onAppear { applyPrefill() }
             .saveErrorAlert($saveError)
+            .successOverlay(isPresented: $showSuccess, message: "Settled") { dismiss() }
         }
     }
 
@@ -171,7 +174,7 @@ struct SettleUpView: View {
         saveError.perform { try modelContext.save() }
         if !saveError.showAlert {
             Self.logger.info("Settlement recorded: \(selectedFrom?.name ?? "You") → \(selectedTo?.name ?? "You"), amount=\(amount, format: .fixed(precision: 2)), method=\(paymentMethod.rawValue)")
-            dismiss()
+            showSuccess = true
         }
     }
 }

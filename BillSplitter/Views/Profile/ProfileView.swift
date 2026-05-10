@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
@@ -15,7 +16,8 @@ struct ProfileView: View {
     @Query private var settlements:                     [Settlement]
     @Query private var expenseParticipants:              [ExpenseParticipant]
 
-    @AppStorage("currency")      private var currency: String            = "INR"
+    @AppStorage("currency")       private var currency: String       = "INR"
+    @AppStorage("appearanceMode") private var appearanceMode: String = "dark"
 
     @State private var isEditingName  = false
     @State private var draftName      = ""
@@ -175,6 +177,14 @@ struct ProfileView: View {
             } label: {
                 Label("Currency", systemImage: "dollarsign.circle.fill")
             }
+
+            Picker(selection: $appearanceMode) {
+                Text("Light").tag("light")
+                Text("Dark").tag("dark")
+                Text("System").tag("system")
+            } label: {
+                Label("Appearance", systemImage: "circle.lefthalf.filled")
+            }
         }
     }
 
@@ -190,10 +200,16 @@ struct ProfileView: View {
 
     // MARK: - About
 
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+
     private var aboutSection: some View {
         Section("About") {
             HStack { Text("App"); Spacer(); Text("BillSplitter").foregroundStyle(.secondary) }
             HStack { Text("Version"); Spacer(); Text("1.0.0").foregroundStyle(.secondary) }
+            Button("Show Onboarding Again") {
+                hasCompletedOnboarding = false
+            }
+            .foregroundStyle(.cyan)
         }
     }
 
@@ -230,11 +246,17 @@ struct ProfileView: View {
     }
 
     private func clearAllData() {
-        expenseParticipants.forEach { modelContext.delete($0) }
-        expenses.forEach            { modelContext.delete($0) }
-        groups.forEach              { modelContext.delete($0) }
-        settlements.forEach         { modelContext.delete($0) }
-        saveError.perform { try modelContext.save() }
+        saveError.perform {
+            try DataService.clearAllData(
+                expenses: expenses,
+                participants: expenseParticipants,
+                groups: groups,
+                settlements: settlements,
+                allUsers: allUsers,
+                currentUserID: CurrentUserManager.currentUserID,
+                context: modelContext
+            )
+        }
     }
 }
 

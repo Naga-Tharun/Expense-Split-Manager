@@ -90,16 +90,14 @@ struct FriendsView: View {
     }
 
     private func deleteFriend(_ friend: User) {
-        let orphanedParticipants = allParticipants.filter { $0.friend?.id == friend.id }
-        orphanedParticipants.forEach { modelContext.delete($0) }
-
-        let orphanedSettlements = settlements.filter {
-            $0.fromFriend?.id == friend.id || $0.toFriend?.id == friend.id
+        saveError.perform {
+            try DataService.deleteFriend(
+                friend,
+                allParticipants: allParticipants,
+                allSettlements: settlements,
+                context: modelContext
+            )
         }
-        orphanedSettlements.forEach { modelContext.delete($0) }
-
-        modelContext.delete(friend)
-        saveError.perform { try modelContext.save() }
         refreshCache()
     }
 }

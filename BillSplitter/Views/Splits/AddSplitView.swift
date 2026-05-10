@@ -60,8 +60,9 @@ struct AddSplitView: View {
                     sortOrder: $sortOrder
                 ) { offsets in
                     let toDelete = offsets.map { filteredExpenses[$0] }
-                    toDelete.forEach { modelContext.delete($0) }
-                    saveError.perform { try modelContext.save() }
+                    saveError.perform {
+                        try DataService.deleteExpenses(toDelete, context: modelContext)
+                    }
                 }
             }
             .navigationTitle("Activity")
@@ -97,6 +98,7 @@ struct AddSplitView: View {
             .background(RoundedRectangle(cornerRadius: 10).fill(color.opacity(0.1)))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 }
 

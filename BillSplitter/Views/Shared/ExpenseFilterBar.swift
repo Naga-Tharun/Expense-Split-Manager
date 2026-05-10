@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 // MARK: - Sort Option
 
@@ -75,6 +76,7 @@ struct ExpenseListHeader: View {
                     .frame(width: 34, height: 34)
                     .background(Circle().fill(Color.cyan.opacity(0.12)))
             }
+            .accessibilityLabel("Sort expenses, currently \(sortOrder.rawValue)")
         }
         .listRowInsets(.init(top: 6, leading: 16, bottom: 2, trailing: 16))
         .listRowSeparator(.hidden)
@@ -114,6 +116,8 @@ struct ExpenseListHeader: View {
             .overlay(Capsule().stroke(isActive ? Color.cyan.opacity(0.5) : Color.clear, lineWidth: 1))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(label ?? "Filter") \(isActive ? ", selected" : "")")
+        .accessibilityAddTraits(isActive ? .isSelected : [])
     }
 }
 

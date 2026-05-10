@@ -12,11 +12,13 @@ struct BalancesView: View {
     @Query private var expenses:                    [Expense]
     @Query private var settlements:                 [Settlement]
 
-    @State private var showSettleUp   = false
-    @State private var showHistory    = false
+    @State private var showSettleUp    = false
+    @State private var showHistory     = false
     @State private var settleFrom:   User?   = nil
     @State private var settleTo:     User?   = nil
     @State private var settleAmount: Double? = nil
+    @State private var showCelebration = false
+    @State private var lastNetBalance: Double = 0
 
     private var currentUserID: UUID? { CurrentUserManager.currentUserID }
     private var currentUser: User? { CurrentUserManager.currentUser(from: allUsers) }
@@ -46,12 +48,24 @@ struct BalancesView: View {
             .onChange(of: showHistory) { _, showing in
                 if !showing { refreshCache() }
             }
+            .celebrationOverlay(isPresented: showCelebration)
         }
     }
 
     private func refreshCache() {
         guard let uid = currentUserID else { return }
+        let oldNet = lastNetBalance
         cache.refresh(expenses: expenses, settlements: settlements, currentUserID: uid)
+        let newNet = cache.netBalance
+        lastNetBalance = newNet
+
+        // Celebrate when transitioning from unsettled → all settled
+        if abs(oldNet) > 0.01 && abs(newNet) < 0.01 && !friendsOnly.isEmpty {
+            showCelebration = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+                showCelebration = false
+            }
+        }
     }
 
     // MARK: - Summary Card

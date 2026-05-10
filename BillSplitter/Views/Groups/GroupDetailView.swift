@@ -59,8 +59,9 @@ struct GroupDetailView: View {
                 sortOrder: $sortOrder
             ) { offsets in
                 let toDelete = offsets.map { filteredExpenses[$0] }
-                toDelete.forEach { modelContext.delete($0) }
-                saveError.perform { try modelContext.save() }
+                saveError.perform {
+                    try DataService.deleteExpenses(toDelete, context: modelContext)
+                }
             }
 
             Section {

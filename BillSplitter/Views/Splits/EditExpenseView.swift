@@ -6,6 +6,7 @@
 import SwiftUI
 import SwiftData
 import PhotosUI
+import UIKit
 
 struct EditExpenseView: View {
     @Environment(\.dismiss)      private var dismiss
@@ -34,6 +35,7 @@ struct EditExpenseView: View {
     @State private var receiptImageData: Data?
     @State private var isLoadingImage = false
     @State private var saveError      = SaveErrorState()
+    @State private var showSuccess    = false
 
     init(expense: Expense) {
         self.expense = expense
@@ -157,6 +159,14 @@ struct EditExpenseView: View {
                 }
             }
             .saveErrorAlert($saveError)
+            .successOverlay(isPresented: $showSuccess, message: "Saved") { dismiss() }
+            .onAppear {
+                // The Paid By picker tags currentUser as nil, so normalise
+                // the stored payer ID to nil when it matches the current user.
+                if selectedPayerID == currentUser?.id {
+                    selectedPayerID = nil
+                }
+            }
         }
     }
 
@@ -204,7 +214,7 @@ struct EditExpenseView: View {
         expense.participants = newParticipants
 
         saveError.perform { try modelContext.save() }
-        if !saveError.showAlert { dismiss() }
+        if !saveError.showAlert { showSuccess = true }
     }
 }
 

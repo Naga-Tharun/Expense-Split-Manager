@@ -19,8 +19,8 @@ final class Group {
     var colorHex: String
     
     // Relationships
-    @Relationship(deleteRule: .cascade) var expenses: [Expense]?
-    @Relationship(deleteRule: .nullify) var members: [User]?
+    @Relationship(deleteRule: .cascade, inverse: \Expense.group) var expenses: [Expense]?
+    @Relationship(deleteRule: .nullify, inverse: \User.groups) var members: [User]?
     
     init(
         id: UUID = UUID(),

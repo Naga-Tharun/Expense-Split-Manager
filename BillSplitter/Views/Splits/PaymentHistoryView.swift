@@ -30,8 +30,12 @@ struct PaymentHistoryView: View {
                     Button("Delete", role: .destructive) {
                         if let offsets = pendingDelete {
                             Haptics.warning()
-                            offsets.map { settlements[$0] }.forEach { modelContext.delete($0) }
-                            saveError.perform { try modelContext.save() }
+                            saveError.perform {
+                                try DataService.deleteSettlements(
+                                    offsets.map { settlements[$0] },
+                                    context: modelContext
+                                )
+                            }
                             pendingDelete = nil
                         }
                     }

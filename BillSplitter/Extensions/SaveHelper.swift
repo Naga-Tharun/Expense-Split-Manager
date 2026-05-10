@@ -9,6 +9,7 @@
 import SwiftUI
 import SwiftData
 import UIKit
+import Observation
 import os
 
 private let logger = Logger(subsystem: "com.billsplitter", category: "persistence")

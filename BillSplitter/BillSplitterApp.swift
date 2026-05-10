@@ -14,6 +14,16 @@ struct BillSplitterApp: App {
 
     let sharedModelContainer: ModelContainer
     @State private var balanceCache = BalanceCache()
+    @AppStorage("appearanceMode") private var appearanceMode: String = "dark"
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+
+    private var colorScheme: ColorScheme? {
+        switch appearanceMode {
+        case "light": return .light
+        case "dark":  return .dark
+        default:      return nil  // "system" follows device setting
+        }
+    }
 
     init() {
         logger.info("BillSplitter launching")
@@ -26,7 +36,7 @@ struct BillSplitterApp: App {
         if let container = try? ModelContainer(for: schema, configurations: [config]) {
             sharedModelContainer = container
         } else {
-            // Schema migration failed — delete the old store and retry
+            // Schema change — delete the old store and retry as last resort
             let storeURL = config.url
             let related = [storeURL,
                            storeURL.deletingPathExtension().appendingPathExtension("sqlite-wal"),
@@ -46,9 +56,14 @@ struct BillSplitterApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainTabView()
-                .environment(balanceCache)
-                .preferredColorScheme(.dark)
+            if hasCompletedOnboarding {
+                MainTabView()
+                    .environment(balanceCache)
+                    .preferredColorScheme(colorScheme)
+            } else {
+                OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
+                    .preferredColorScheme(colorScheme)
+            }
         }
         .modelContainer(sharedModelContainer)
     }

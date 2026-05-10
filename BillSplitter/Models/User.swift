@@ -17,8 +17,10 @@ final class User {
     var createdAt: Date
     
     // Relationships
-    @Relationship(deleteRule: .cascade) var expenses: [Expense]?
-    @Relationship(deleteRule: .nullify) var groups: [Group]?
+    @Relationship(deleteRule: .cascade, inverse: \Expense.paidBy) var expenses: [Expense]?
+    @Relationship(deleteRule: .nullify) var groups: [Group]?  // inverse defined on Group.members
+    @Relationship(deleteRule: .cascade, inverse: \Settlement.fromFriend) var settlementsFrom: [Settlement]?
+    @Relationship(deleteRule: .cascade, inverse: \Settlement.toFriend) var settlementsTo: [Settlement]?
     
     init(
         id: UUID = UUID(),

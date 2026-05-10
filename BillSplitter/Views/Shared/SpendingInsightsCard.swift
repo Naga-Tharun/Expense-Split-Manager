@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct SpendingInsightsCard: View {
     let expenses: [Expense]

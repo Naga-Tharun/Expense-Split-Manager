@@ -61,6 +61,8 @@ enum ExpenseFormLogic {
     // MARK: - Build Participants
 
     /// Creates ExpenseParticipant objects with correct amountOwed based on split type.
+    /// For equal splits, the last participant absorbs the rounding remainder
+    /// so the split always sums to the exact expense amount.
     static func buildParticipants(
         from participantList: [User],
         splitType: SplitType,
@@ -68,12 +70,20 @@ enum ExpenseFormLogic {
         customAmounts: [UUID: String],
         percentages: [UUID: String]
     ) -> [ExpenseParticipant] {
-        let share = equalShare(amount: amount, participantCount: participantList.count)
-        return participantList.map { user in
+        let count = participantList.count
+        let baseShare = equalShare(amount: amount, participantCount: count)
+
+        return participantList.enumerated().map { index, user in
             let ep = ExpenseParticipant(friend: user)
             switch splitType {
             case .equal:
-                ep.amountOwed = share
+                if index == count - 1 && count > 0 {
+                    // Last participant absorbs rounding remainder
+                    let othersTotal = (Double(count - 1) * (baseShare * 100).rounded() / 100)
+                    ep.amountOwed = ((amount - othersTotal) * 100).rounded() / 100
+                } else {
+                    ep.amountOwed = (baseShare * 100).rounded() / 100
+                }
             case .custom:
                 ep.amountOwed = Double(customAmounts[user.id] ?? "0") ?? 0
             case .percentage:

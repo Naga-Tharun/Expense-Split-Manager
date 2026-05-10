@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct IconPickerView: View {
     let availableIcons: [String]

@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct ExpenseDetailView: View {
     @Environment(\.modelContext) private var modelContext
@@ -73,8 +74,9 @@ struct ExpenseDetailView: View {
         .alert("Delete Expense?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) {
                 Haptics.warning()
-                modelContext.delete(expense)
-                saveError.perform { try modelContext.save() }
+                saveError.perform {
+                    try DataService.deleteExpenses([expense], context: modelContext)
+                }
                 dismiss()
             }
             Button("Cancel", role: .cancel) { }

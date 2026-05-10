@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import Foundation
+import UIKit
 
 extension Color {
     init(hex: String) {

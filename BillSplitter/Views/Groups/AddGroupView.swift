@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct AddGroupView: View {
     @Environment(\.dismiss)      private var dismiss
@@ -19,6 +20,7 @@ struct AddGroupView: View {
     @State private var selectedIcon     = "person.3.fill"
     @State private var showIconPicker   = false
     @State private var saveError        = SaveErrorState()
+    @State private var showSuccess      = false
     @State private var selectedMemberIDs: Set<UUID> = []
 
     private let colorOptions   = ["#007AFF", "#FF9500", "#34C759", "#FF3B30", "#5856D6", "#FF2D55"]
@@ -132,6 +134,7 @@ struct AddGroupView: View {
                 }
             }
             .saveErrorAlert($saveError)
+            .successOverlay(isPresented: $showSuccess, message: "Group Created") { dismiss() }
         }
     }
 
@@ -154,7 +157,7 @@ struct AddGroupView: View {
 
         modelContext.insert(newGroup)
         saveError.perform { try modelContext.save() }
-        if !saveError.showAlert { dismiss() }
+        if !saveError.showAlert { showSuccess = true }
     }
 }
 

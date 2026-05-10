@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct AddFriendView: View {
     @Environment(\.dismiss) private var dismiss
@@ -9,6 +10,7 @@ struct AddFriendView: View {
     @State private var selectedColorHex: String = "#007AFF"
     @State private var selectedColor: Color = Color(hex: "#007AFF")
     @State private var saveError = SaveErrorState()
+    @State private var showSuccess = false
     
     // Simple palette of colors to choose from
     private let colorOptions: [String] = ["#007AFF", "#FF9500", "#34C759", "#FF3B30", "#5856D6", "#FF2D55"]
@@ -72,6 +74,7 @@ struct AddFriendView: View {
                 }
             }
             .saveErrorAlert($saveError)
+            .successOverlay(isPresented: $showSuccess, message: "Friend Added") { dismiss() }
         }
     }
 
@@ -79,10 +82,10 @@ struct AddFriendView: View {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { return }
 
-        let newUser = User(name: trimmedName, profileColor: selectedColorHex)
-        modelContext.insert(newUser)
-        saveError.perform { try modelContext.save() }
-        if !saveError.showAlert { dismiss() }
+        saveError.perform {
+            try DataService.addFriend(name: trimmedName, profileColor: selectedColorHex, context: modelContext)
+        }
+        if !saveError.showAlert { showSuccess = true }
     }
 }
 

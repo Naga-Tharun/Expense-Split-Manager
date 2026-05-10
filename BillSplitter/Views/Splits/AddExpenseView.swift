@@ -6,6 +6,7 @@
 import SwiftUI
 import SwiftData
 import PhotosUI
+import UIKit
 import os
 
 struct AddExpenseView: View {
@@ -30,6 +31,7 @@ struct AddExpenseView: View {
     @State private var receiptImageData: Data?  = nil
     @State private var isLoadingImage           = false
     @State private var saveError                = SaveErrorState()
+    @State private var showSuccess              = false
 
     let preselectedGroup: Group?
     init(preselectedGroup: Group? = nil) { self.preselectedGroup = preselectedGroup }
@@ -125,6 +127,7 @@ struct AddExpenseView: View {
                 if let g = preselectedGroup { selectedGroupID = g.id }
             }
             .saveErrorAlert($saveError)
+            .successOverlay(isPresented: $showSuccess, message: "Expense Added") { dismiss() }
         }
     }
 
@@ -169,7 +172,7 @@ struct AddExpenseView: View {
         saveError.perform { try modelContext.save() }
         if !saveError.showAlert {
             Self.logger.info("Expense created: '\(expenseDescription)' amount=\(amount, format: .fixed(precision: 2)), category=\(category.rawValue), split=\(splitType.rawValue), participants=\(participants.count)")
-            dismiss()
+            showSuccess = true
         }
     }
 }
