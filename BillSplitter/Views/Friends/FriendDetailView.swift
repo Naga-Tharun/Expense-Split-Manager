@@ -16,11 +16,10 @@ struct FriendDetailView: View {
 
     @State private var showSettleUp = false
 
-    // Filter state
+    // Search & filter state
     @State private var searchText      = ""
     @State private var filterCategory: ExpenseCategory? = nil
     @State private var sortOrder: ExpenseSortOption = .dateDesc
-    @State private var showFilters     = false
 
     private var currentUserID: UUID? { CurrentUserManager.currentUserID }
     private var currentUser: User? { CurrentUserManager.currentUser(from: allUsers) }
@@ -49,34 +48,27 @@ struct FriendDetailView: View {
         List {
             headerSection
 
-            // Filter bar (collapsible)
-            if !sharedExpenses.isEmpty {
-                ExpenseFilterBar(
-                    filterCategory: $filterCategory,
-                    sortOrder: $sortOrder,
-                    isExpanded: $showFilters
-                )
-            }
-
-            // Expenses
+            // Expenses (search + filter + sort built in)
             FilteredExpensesList(
                 filtered: filteredSharedExpenses,
                 total: sharedExpenses.count,
                 headerTitle: "Shared Expenses",
                 emptyTitle: "No Shared Expenses",
                 emptyIcon: "cart",
-                emptyMessage: "No expenses shared with \(friend.name) yet"
+                emptyMessage: "No expenses shared with \(friend.name) yet",
+                searchText: $searchText,
+                filterCategory: $filterCategory,
+                sortOrder: $sortOrder
             )
 
             if !friendSettlements.isEmpty { settlementsSection }
         }
         .navigationTitle(friend.name)
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $searchText, prompt: "Search expenses…")
         .onAppear { refreshCache() }
         .toolbar {
-            if balance < -0.01 {
-                ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
+                if balance < -0.01 {
                     Button("Settle Up") { showSettleUp = true }
                         .fontWeight(.semibold).tint(.cyan)
                 }

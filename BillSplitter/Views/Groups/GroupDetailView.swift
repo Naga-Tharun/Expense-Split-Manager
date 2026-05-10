@@ -16,11 +16,10 @@ struct GroupDetailView: View {
     @State private var showAddExpense = false
     @State private var showSettleUp   = false
 
-    // Filter state
+    // Search & filter state
     @State private var searchText      = ""
     @State private var filterCategory: ExpenseCategory? = nil
     @State private var sortOrder: ExpenseSortOption = .dateDesc
-    @State private var showFilters     = false
 
     private var currentUser: User? { CurrentUserManager.currentUser(from: allUsers) }
 
@@ -37,23 +36,17 @@ struct GroupDetailView: View {
             statsRow
             membersSection
 
-            // Filter bar (collapsible)
-            if !groupExpenses.isEmpty {
-                ExpenseFilterBar(
-                    filterCategory: $filterCategory,
-                    sortOrder: $sortOrder,
-                    isExpanded: $showFilters
-                )
-            }
-
-            // Expenses
+            // Expenses (search + filter + sort built in)
             FilteredExpensesList(
                 filtered: filteredExpenses,
                 total: groupExpenses.count,
                 headerTitle: "Expenses",
                 emptyTitle: "No Expenses Yet",
                 emptyIcon: "cart.badge.plus",
-                emptyMessage: "Add an expense to start tracking"
+                emptyMessage: "Add an expense to start tracking",
+                searchText: $searchText,
+                filterCategory: $filterCategory,
+                sortOrder: $sortOrder
             ) { offsets in
                 let toDelete = offsets.map { filteredExpenses[$0] }
                 toDelete.forEach { modelContext.delete($0) }
@@ -69,7 +62,6 @@ struct GroupDetailView: View {
         }
         .navigationTitle(group.name)
         .navigationBarTitleDisplayMode(.large)
-        .searchable(text: $searchText, prompt: "Search expenses…")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {

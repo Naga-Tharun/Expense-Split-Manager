@@ -28,24 +28,18 @@ struct GroupRowView: View {
                     .font(.body)
                     .fontWeight(.medium)
 
-                HStack(spacing: 6) {
-                    Label("\(memberCount)", systemImage: "person.2")
-                    if expenseCount > 0 {
-                        Text("·")
-                        Label("\(expenseCount)", systemImage: "receipt")
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                Text("\(memberCount) members · \(expenseCount) expenses")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Spacer()
 
             if expenseCount > 0 {
                 let total = (group.expenses ?? []).reduce(0) { $0 + $1.amount }
-                Text("\(CurrencyHelper.symbol)\(total, specifier: "%.0f")")
-                    .font(.caption)
-                    .fontWeight(.medium)
+                Text("\(CurrencyHelper.symbol)\(String(format: "%.0f", total))")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
             }

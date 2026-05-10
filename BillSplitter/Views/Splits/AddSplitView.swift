@@ -21,7 +21,6 @@ struct AddSplitView: View {
     @State private var searchText      = ""
     @State private var filterCategory: ExpenseCategory? = nil
     @State private var sortOrder: ExpenseSortOption = .dateDesc
-    @State private var showFilters     = false
 
     private var filteredExpenses: [Expense] {
         expenses.filtered(searchText: searchText, category: filterCategory, sortOrder: sortOrder)
@@ -32,7 +31,7 @@ struct AddSplitView: View {
             List {
                 // Quick Actions
                 Section {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                    HStack(spacing: 10) {
                         quickAction("Expense", icon: "plus.circle.fill", color: .blue)   { showAddExpense = true }
                         quickAction("Friend",  icon: "person.badge.plus", color: .green)  { showAddFriend  = true }
                         quickAction("Group",   icon: "person.3.fill", color: .orange)     { showAddGroup   = true }
@@ -47,30 +46,23 @@ struct AddSplitView: View {
                     SpendingInsightsCard(expenses: expenses)
                 }
 
-                // Filter bar (collapsible)
-                if !expenses.isEmpty {
-                    ExpenseFilterBar(
-                        filterCategory: $filterCategory,
-                        sortOrder: $sortOrder,
-                        isExpanded: $showFilters
-                    )
-                }
-
-                // Expense list
+                // Expense list (search + filter + sort built in)
                 FilteredExpensesList(
                     filtered: filteredExpenses,
                     total: expenses.count,
                     headerTitle: "Expenses",
                     emptyTitle: "No Expenses Yet",
                     emptyIcon: "cart.badge.plus",
-                    emptyMessage: "Tap \"+\" to create your first split"
+                    emptyMessage: "Tap \"+\" to create your first split",
+                    searchText: $searchText,
+                    filterCategory: $filterCategory,
+                    sortOrder: $sortOrder
                 ) { offsets in
                     let toDelete = offsets.map { filteredExpenses[$0] }
                     toDelete.forEach { modelContext.delete($0) }
                 }
             }
             .navigationTitle("Activity")
-            .searchable(text: $searchText, prompt: "Search expenses…")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showAddExpense = true } label: { Image(systemName: "plus") }
@@ -88,18 +80,18 @@ struct AddSplitView: View {
     @ViewBuilder
     private func quickAction(_ label: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 6) {
+            VStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.title3)
+                    .font(.subheadline)
                     .foregroundStyle(color)
                 Text(label)
-                    .font(.caption)
+                    .font(.caption2)
                     .fontWeight(.medium)
                     .foregroundStyle(.primary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(RoundedRectangle(cornerRadius: 12).fill(color.opacity(0.1)))
+            .padding(.vertical, 10)
+            .background(RoundedRectangle(cornerRadius: 10).fill(color.opacity(0.1)))
         }
         .buttonStyle(.plain)
     }

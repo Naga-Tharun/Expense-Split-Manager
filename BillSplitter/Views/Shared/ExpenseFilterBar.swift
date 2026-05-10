@@ -2,7 +2,7 @@
 //  ExpenseFilterBar.swift
 //  BillSplitter
 //
-//  Reusable collapsible filter bar for expense lists.
+//  Compact search + category filter + sort controls for expense lists.
 //  Used in AddSplitView, GroupDetailView, and FriendDetailView.
 //
 
@@ -18,99 +18,97 @@ enum ExpenseSortOption: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-// MARK: - Filter Bar
+// MARK: - Expense List Header (search + filter chips + sort — always visible)
 
-struct ExpenseFilterBar: View {
+/// A compact, always-visible header that sits directly above the expense rows.
+/// Row 1: Search field with sort menu on the right.
+/// Row 2: Horizontally scrolling category chips.
+struct ExpenseListHeader: View {
+    @Binding var searchText: String
     @Binding var filterCategory: ExpenseCategory?
     @Binding var sortOrder: ExpenseSortOption
-    @Binding var isExpanded: Bool
 
     var body: some View {
-        Section {
-            // Toggle button row
-            Button {
-                withAnimation(.snappy(duration: 0.25)) {
-                    isExpanded.toggle()
-                }
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "line.3.horizontal.decrease")
-                        .font(.subheadline)
-                        .foregroundStyle(.cyan)
-
-                    Text("Filter & Sort")
-                        .font(.subheadline)
-                        .foregroundStyle(.primary)
-
-                    if filterCategory != nil {
-                        Text(filterCategory!.label)
-                            .font(.caption2)
-                            .fontWeight(.semibold)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Capsule().fill(Color.cyan.opacity(0.2)))
-                            .foregroundStyle(.cyan)
+        // Search + sort row
+        HStack(spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                TextField("Search…", text: $searchText)
+                    .font(.subheadline)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
-
-                    Spacer()
-
-                    Image(systemName: "chevron.down")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                    .buttonStyle(.plain)
                 }
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color(.tertiarySystemBackground)))
 
-            // Expanded content
-            if isExpanded {
-                // Category chips
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        chipButton("All", icon: nil, isActive: filterCategory == nil) {
-                            filterCategory = nil
-                        }
-                        ForEach(ExpenseCategory.allCases) { cat in
-                            chipButton(nil, icon: cat.icon, isActive: filterCategory == cat) {
-                                filterCategory = (filterCategory == cat) ? nil : cat
+            // Sort menu
+            Menu {
+                ForEach(ExpenseSortOption.allCases) { opt in
+                    Button {
+                        sortOrder = opt
+                    } label: {
+                        HStack {
+                            Text(opt.rawValue)
+                            if sortOrder == opt {
+                                Image(systemName: "checkmark")
                             }
                         }
                     }
-                    .padding(.horizontal, 2)
                 }
-                .listRowInsets(.init(top: 2, leading: 10, bottom: 2, trailing: 10))
+            } label: {
+                Image(systemName: "arrow.up.arrow.down")
+                    .font(.subheadline)
+                    .foregroundStyle(.cyan)
+                    .frame(width: 34, height: 34)
+                    .background(Circle().fill(Color.cyan.opacity(0.12)))
+            }
+        }
+        .listRowInsets(.init(top: 6, leading: 16, bottom: 2, trailing: 16))
+        .listRowSeparator(.hidden)
 
-                // Sort picker
-                HStack {
-                    Text("Sort by")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Picker("Sort", selection: $sortOrder) {
-                        ForEach(ExpenseSortOption.allCases) { opt in
-                            Text(opt.rawValue).tag(opt)
-                        }
+        // Category chips row
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                chipButton("All", icon: nil, isActive: filterCategory == nil) {
+                    filterCategory = nil
+                }
+                ForEach(ExpenseCategory.allCases) { cat in
+                    chipButton(cat.label, icon: cat.icon, isActive: filterCategory == cat) {
+                        filterCategory = (filterCategory == cat) ? nil : cat
                     }
-                    .pickerStyle(.menu)
-                    .labelsHidden()
                 }
             }
         }
+        .listRowInsets(.init(top: 2, leading: 16, bottom: 6, trailing: 16))
+        .listRowSeparator(.hidden)
     }
 
     @ViewBuilder
     private func chipButton(_ label: String?, icon: String?, isActive: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 3) {
+            HStack(spacing: 4) {
                 if let icon {
-                    Image(systemName: icon).font(.caption)
+                    Image(systemName: icon).font(.caption2)
                 }
                 if let label {
-                    Text(label).font(.caption).fontWeight(.medium)
+                    Text(label).font(.caption2).fontWeight(.medium)
                 }
             }
-            .frame(width: 36, height: 30)
-            .frame(minWidth: label != nil ? 44 : 36)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
             .background(Capsule().fill(isActive ? Color.cyan.opacity(0.2) : Color(.tertiarySystemBackground)))
             .foregroundColor(isActive ? .cyan : .secondary)
             .overlay(Capsule().stroke(isActive ? Color.cyan.opacity(0.5) : Color.clear, lineWidth: 1))
@@ -155,7 +153,7 @@ extension Array where Element == Expense {
 
 // MARK: - Filtered Expenses Section
 
-/// Reusable expense list section with empty state handling.
+/// Reusable expense list section with search/filter/sort header and empty state.
 struct FilteredExpensesList: View {
     let filtered: [Expense]
     let total: Int
@@ -163,10 +161,24 @@ struct FilteredExpensesList: View {
     let emptyTitle: String
     let emptyIcon: String
     let emptyMessage: String
+
+    @Binding var searchText: String
+    @Binding var filterCategory: ExpenseCategory?
+    @Binding var sortOrder: ExpenseSortOption
+
     var onDelete: ((IndexSet) -> Void)? = nil
 
     var body: some View {
         Section {
+            // Search + filter + sort controls (always visible when expenses exist)
+            if total > 0 {
+                ExpenseListHeader(
+                    searchText: $searchText,
+                    filterCategory: $filterCategory,
+                    sortOrder: $sortOrder
+                )
+            }
+
             if filtered.isEmpty {
                 if total == 0 {
                     ContentUnavailableView(
