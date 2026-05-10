@@ -69,7 +69,7 @@ struct BalancesView: View {
                 VStack(spacing: 18) {
                     VStack(spacing: 4) {
                         Text("Net Balance").font(.subheadline).foregroundStyle(.secondary)
-                        Text("₹\(abs(netBalance), specifier: "%.2f")")
+                        Text("\(CurrencyHelper.symbol)\(abs(netBalance), specifier: "%.2f")")
                             .font(.system(size: 44, weight: .bold, design: .rounded))
                             .foregroundColor(netBalanceColor)
                         Text(netBalanceLabel).font(.caption)
@@ -104,7 +104,7 @@ struct BalancesView: View {
     private func summaryPill(title: String, value: Double, color: Color) -> some View {
         VStack(spacing: 4) {
             Text(title).font(.caption).foregroundStyle(.secondary)
-            Text("₹\(value, specifier: "%.2f")").font(.headline).foregroundColor(color)
+            Text("\(CurrencyHelper.symbol)\(value, specifier: "%.2f")").font(.headline).foregroundColor(color)
         }
         .frame(maxWidth: .infinity)
     }
@@ -147,7 +147,7 @@ struct BalancesView: View {
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 4) {
-                Text("₹\(abs(balance), specifier: "%.2f")")
+                Text("\(CurrencyHelper.symbol)\(abs(balance), specifier: "%.2f")")
                     .font(.subheadline).fontWeight(.semibold)
                     .foregroundColor(abs(balance) < 0.01 ? .secondary : balance > 0 ? .green : .red)
 
@@ -186,5 +186,6 @@ struct BalancesView: View {
 
 #Preview {
     BalancesView()
-        .withPreviewContainer()
+        .modelContainer(PreviewSampleData.container())
+        .preferredColorScheme(.dark)
 }

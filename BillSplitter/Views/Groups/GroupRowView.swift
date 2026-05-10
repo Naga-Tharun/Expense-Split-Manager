@@ -46,6 +46,5 @@ struct GroupRowView: View {
 
 #Preview {
     GroupRowView(group: Group(name: "Flatmates", groupDescription: "Bills and Other Expenses", iconName: "house.fill"))
-        .modelContainer(for: [Group.self], inMemory: true)
-        .preferredColorScheme(.dark)
+        .withPreviewContainer()
 }

@@ -85,6 +85,5 @@ struct AddFriendView: View {
 
 #Preview {
     AddFriendView()
-        .modelContainer(for: [User.self], inMemory: true)
-        .preferredColorScheme(.dark)
+        .withPreviewContainer()
 }

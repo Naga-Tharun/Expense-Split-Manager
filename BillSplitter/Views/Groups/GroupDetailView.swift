@@ -73,7 +73,7 @@ struct GroupDetailView: View {
             HStack(spacing: 8) {
                 statCard(title: "Members",  value: "\(members.count)",       icon: "person.2.fill",               color: .cyan)
                 statCard(title: "Expenses", value: "\(groupExpenses.count)", icon: "list.bullet.rectangle",       color: .orange)
-                statCard(title: "Total",    value: "₹\(Int(totalExpenses))", icon: "indianrupeesign.circle.fill", color: .green)
+                statCard(title: "Total",    value: "\(CurrencyHelper.symbol)\(Int(totalExpenses))", icon: "indianrupeesign.circle.fill", color: .green)
             }
         }
         .listRowInsets(.init(top: 8, leading: 12, bottom: 8, trailing: 12))
@@ -156,7 +156,7 @@ struct GroupDetailView: View {
                 Text("Expenses")
                 Spacer()
                 if !groupExpenses.isEmpty {
-                    Text("₹\(totalExpenses, specifier: "%.2f") total").font(.caption).foregroundStyle(.secondary)
+                    Text("\(CurrencyHelper.symbol)\(totalExpenses, specifier: "%.2f") total").font(.caption).foregroundStyle(.secondary)
                 }
             }
         }
@@ -166,7 +166,8 @@ struct GroupDetailView: View {
 // MARK: - AddMemberSheet
 
 struct AddMemberSheet: View {
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss)      private var dismiss
+    @Environment(\.modelContext) private var modelContext
     let group:         Group
     let allUsers:      [User]
     let currentUserID: UUID?
@@ -201,6 +202,7 @@ struct AddMemberSheet: View {
                     var members = group.members ?? []
                     members.append(user)
                     group.members = members
+                    try? modelContext.save()
                     dismiss()
                 } label: {
                     HStack(spacing: 12) {

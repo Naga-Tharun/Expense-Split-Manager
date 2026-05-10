@@ -35,7 +35,6 @@ struct GroupListView: View {
             ],
             onDelete: { _ in }
         )
-        .modelContainer(for: [Group.self], inMemory: true)
-        .preferredColorScheme(.dark)
+        .withPreviewContainer()
     }
 }

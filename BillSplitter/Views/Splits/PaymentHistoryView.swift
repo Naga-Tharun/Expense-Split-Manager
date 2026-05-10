@@ -80,7 +80,7 @@ struct PaymentHistoryView: View {
 
             Spacer()
 
-            Text("₹\(s.amount, specifier: "%.2f")")
+            Text("\(CurrencyHelper.symbol)\(s.amount, specifier: "%.2f")")
                 .font(.headline).fontWeight(.bold)
                 .foregroundColor(Color.green)
         }
@@ -99,6 +99,6 @@ struct PaymentHistoryView: View {
 
 #Preview {
     PaymentHistoryView()
-        .modelContainer(for: [Settlement.self, User.self], inMemory: true)
+        .modelContainer(PreviewSampleData.container())
         .preferredColorScheme(.dark)
 }

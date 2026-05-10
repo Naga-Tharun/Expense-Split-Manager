@@ -21,16 +21,7 @@ struct ExpenseDetailView: View {
     private var currentUserID: UUID? { UUID(uuidString: currentUserIDString) }
 
     private var categoryIcon: String {
-        switch expense.category {
-        case "food":          return "fork.knife"
-        case "transport":     return "car.fill"
-        case "accommodation": return "house.fill"
-        case "entertainment": return "theatermasks.fill"
-        case "shopping":      return "cart.fill"
-        case "utilities":     return "bolt.fill"
-        case "travel":        return "airplane"
-        default:              return "square.grid.2x2.fill"
-        }
+        ExpenseCategories.icon(for: expense.category)
     }
 
     private var paidByLabel: String {
@@ -72,7 +63,7 @@ struct ExpenseDetailView: View {
                 }
                 Text(expense.expenseDescription)
                     .font(.title2).fontWeight(.bold).multilineTextAlignment(.center)
-                Text("₹\(expense.amount, specifier: "%.2f")")
+                Text("\(CurrencyHelper.symbol)\(expense.amount, specifier: "%.2f")")
                     .font(.system(size: 40, weight: .bold, design: .rounded))
                 Text(expense.category.capitalized)
                     .font(.caption).padding(.horizontal, 10).padding(.vertical, 4)
@@ -116,7 +107,7 @@ struct ExpenseDetailView: View {
                         }
                         Text(friend.id == currentUserID ? "\(friend.name) (you)" : friend.name)
                         Spacer()
-                        Text("₹\(p.amountOwed, specifier: "%.2f")").fontWeight(.semibold)
+                        Text("\(CurrencyHelper.symbol)\(p.amountOwed, specifier: "%.2f")").fontWeight(.semibold)
                     }
                 }
             }

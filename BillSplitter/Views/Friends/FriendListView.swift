@@ -35,7 +35,6 @@ struct FriendListView: View {
             ],
             onDelete: { _ in }
         )
-        .modelContainer(for: [User.self], inMemory: true)
-        .preferredColorScheme(.dark)
+        .withPreviewContainer()
     }
 }

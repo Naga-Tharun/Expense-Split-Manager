@@ -84,16 +84,7 @@ struct ExpenseRow: View {
     let expense: Expense
 
     private var categoryIcon: String {
-        switch expense.category {
-        case "food":          return "fork.knife"
-        case "transport":     return "car.fill"
-        case "accommodation": return "house.fill"
-        case "entertainment": return "theatermasks.fill"
-        case "shopping":      return "cart.fill"
-        case "utilities":     return "bolt.fill"
-        case "travel":        return "airplane"
-        default:              return "square.grid.2x2.fill"
-        }
+        ExpenseCategories.icon(for: expense.category)
     }
 
     var body: some View {
@@ -114,7 +105,7 @@ struct ExpenseRow: View {
                 .font(.caption).foregroundStyle(.secondary)
             }
             Spacer(minLength: 8)
-            Text("₹\(expense.amount, specifier: "%.2f")")
+            Text("\(CurrencyHelper.symbol)\(expense.amount, specifier: "%.2f")")
                 .font(.subheadline).fontWeight(.semibold)
         }
         .padding(.vertical, 3)
@@ -123,5 +114,6 @@ struct ExpenseRow: View {
 
 #Preview {
     AddSplitView()
-        .withPreviewContainer()
+        .modelContainer(PreviewSampleData.container())
+        .preferredColorScheme(.dark)
 }

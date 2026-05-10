@@ -66,6 +66,6 @@ struct GroupsView: View {
 
 #Preview {
     GroupsView()
-        .modelContainer(for: [Group.self], inMemory: true)
+        .modelContainer(PreviewSampleData.container())
         .preferredColorScheme(.dark)
 }

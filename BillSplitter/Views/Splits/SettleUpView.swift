@@ -74,7 +74,7 @@ struct SettleUpView: View {
             VStack(spacing: 6) {
                 Text("Settlement Amount").font(.subheadline).foregroundStyle(.secondary)
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text("₹").font(.system(size: 28, weight: .semibold)).foregroundStyle(.secondary)
+                    Text(CurrencyHelper.symbol).font(.system(size: 28, weight: .semibold)).foregroundStyle(.secondary)
                     TextField("0.00", text: $amountText)
                         .keyboardType(.decimalPad)
                         .font(.system(size: 48, weight: .bold, design: .rounded))
@@ -129,10 +129,12 @@ struct SettleUpView: View {
 
     private var summarySection: some View {
         Section {
-            HStack {
-                Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
-                Text("\(displayName(selectedFrom!)) pays ₹\(Double(amountText) ?? 0, specifier: "%.2f") to \(displayName(selectedTo!))")
-                    .font(.subheadline).foregroundStyle(.secondary)
+            if let from = selectedFrom, let to = selectedTo {
+                HStack {
+                    Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
+                    Text("\(displayName(from)) pays \(CurrencyHelper.symbol)\(Double(amountText) ?? 0, specifier: "%.2f") to \(displayName(to))")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                }
             }
         }
     }

@@ -83,7 +83,7 @@ struct FriendDetailView: View {
                     VStack(spacing: 4) {
                         Text(balance > 0 ? "\(friend.name) owes you" : "You owe \(friend.name)")
                             .font(.subheadline).foregroundStyle(.secondary)
-                        Text("₹\(abs(balance), specifier: "%.2f")")
+                        Text("\(CurrencyHelper.symbol)\(abs(balance), specifier: "%.2f")")
                             .font(.system(size: 34, weight: .bold, design: .rounded))
                             .foregroundColor(balance > 0 ? .green : .red)
                     }
@@ -154,7 +154,7 @@ struct FriendDetailView: View {
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Text("₹\(s.amount, specifier: "%.2f")").fontWeight(.semibold).foregroundColor(.green)
+                    Text("\(CurrencyHelper.symbol)\(s.amount, specifier: "%.2f")").fontWeight(.semibold).foregroundColor(.green)
                 }
                 .padding(.vertical, 2)
             }

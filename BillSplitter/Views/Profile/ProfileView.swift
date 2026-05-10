@@ -9,10 +9,11 @@ import SwiftData
 struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
 
-    @Query(sort: \User.name) private var allUsers:  [User]
-    @Query private var expenses:                    [Expense]
-    @Query private var groups:                      [Group]
-    @Query private var settlements:                 [Settlement]
+    @Query(sort: \User.name) private var allUsers:       [User]
+    @Query private var expenses:                        [Expense]
+    @Query private var groups:                          [Group]
+    @Query private var settlements:                     [Settlement]
+    @Query private var expenseParticipants:              [ExpenseParticipant]
 
     @AppStorage("currentUserID") private var currentUserIDString: String = ""
     @AppStorage("currency")      private var currency: String            = "INR"
@@ -156,7 +157,7 @@ struct ProfileView: View {
                     Image(systemName: "indianrupeesign.circle.fill").foregroundColor(.purple)
                 }
                 Spacer()
-                Text("₹\(totalSplit, specifier: "%.2f")").foregroundStyle(.secondary).fontWeight(.semibold)
+                Text("\(CurrencyHelper.symbol)\(totalSplit, specifier: "%.2f")").foregroundStyle(.secondary).fontWeight(.semibold)
             }
         }
     }
@@ -237,14 +238,16 @@ struct ProfileView: View {
     }
 
     private func clearAllData() {
-        expenses.forEach    { modelContext.delete($0) }
-        groups.forEach      { modelContext.delete($0) }
-        settlements.forEach { modelContext.delete($0) }
+        expenseParticipants.forEach { modelContext.delete($0) }
+        expenses.forEach            { modelContext.delete($0) }
+        groups.forEach              { modelContext.delete($0) }
+        settlements.forEach         { modelContext.delete($0) }
         try? modelContext.save()
     }
 }
 
 #Preview {
     ProfileView()
-        .withPreviewContainer()
+        .modelContainer(PreviewSampleData.container())
+        .preferredColorScheme(.dark)
 }

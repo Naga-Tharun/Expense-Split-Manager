@@ -28,6 +28,6 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
-        .modelContainer(for: [User.self, Group.self, Expense.self, Settlement.self, ExpenseParticipant.self], inMemory: true)
+        .modelContainer(PreviewSampleData.container())
         .preferredColorScheme(.dark)
 }

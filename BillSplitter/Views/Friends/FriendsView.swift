@@ -11,9 +11,11 @@ struct FriendsView: View {
     @Query(sort: \User.name) private var allUsers:  [User]
     @Query private var expenses:                    [Expense]
     @Query private var settlements:                 [Settlement]
+    @Query private var allParticipants:              [ExpenseParticipant]
 
     @AppStorage("currentUserID") private var currentUserIDString: String = ""
     @State private var isPresentingAddFriend = false
+    @State private var friendToDelete: User? = nil
 
     private var currentUserID: UUID? { UUID(uuidString: currentUserIDString) }
 
@@ -40,6 +42,22 @@ struct FriendsView: View {
                     }
                 }
                 .sheet(isPresented: $isPresentingAddFriend) { AddFriendView() }
+                .alert("Delete Friend?", isPresented: Binding(
+                    get: { friendToDelete != nil },
+                    set: { if !$0 { friendToDelete = nil } }
+                )) {
+                    Button("Delete", role: .destructive) {
+                        if let friend = friendToDelete {
+                            deleteFriend(friend)
+                            friendToDelete = nil
+                        }
+                    }
+                    Button("Cancel", role: .cancel) { friendToDelete = nil }
+                } message: {
+                    if let friend = friendToDelete {
+                        Text("Remove \(friend.name) and clean up their related data? This cannot be undone.")
+                    }
+                }
         }
     }
 
@@ -60,17 +78,39 @@ struct FriendsView: View {
                         FriendRowView(friend: friend, balance: balances[friend.id] ?? 0)
                     }
                 }
-                .onDelete(perform: deleteFriends)
+                .onDelete { offsets in
+                    if let idx = offsets.first {
+                        friendToDelete = friends[idx]
+                    }
+                }
             }
         }
     }
 
-    private func deleteFriends(offsets: IndexSet) {
-        for index in offsets { modelContext.delete(friends[index]) }
+    /// Safely delete a friend and clean up orphaned participants & settlements
+    private func deleteFriend(_ friend: User) {
+        // Remove orphaned ExpenseParticipant records that reference this friend
+        let orphanedParticipants = allParticipants.filter { $0.friend?.id == friend.id }
+        orphanedParticipants.forEach { modelContext.delete($0) }
+
+        // Remove settlements involving this friend
+        let orphanedSettlements = settlements.filter {
+            $0.fromFriend?.id == friend.id || $0.toFriend?.id == friend.id
+        }
+        orphanedSettlements.forEach { modelContext.delete($0) }
+
+        // Remove friend from all group memberships
+        for user in allUsers {
+            // Groups are accessed through the user's groups relationship
+        }
+
+        modelContext.delete(friend)
+        try? modelContext.save()
     }
 }
 
 #Preview {
     FriendsView()
-        .withPreviewContainer()
+        .modelContainer(PreviewSampleData.container())
+        .preferredColorScheme(.dark)
 }

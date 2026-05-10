@@ -40,7 +40,7 @@ struct FriendRowView: View {
             Spacer()
 
             if abs(balance) > 0.01 {
-                Text("₹\(abs(balance), specifier: "%.2f")")
+                Text("\(CurrencyHelper.symbol)\(abs(balance), specifier: "%.2f")")
                     .font(.subheadline).fontWeight(.semibold)
                     .foregroundColor(balance > 0 ? Color.green : Color.red)
             } else {
@@ -58,6 +58,5 @@ struct FriendRowView: View {
         FriendRowView(friend: User(name: "Jordan", profileColor: "#FF9500"), balance: -200.0)
         FriendRowView(friend: User(name: "Sam",    profileColor: "#34C759"), balance:    0.0)
     }
-    .modelContainer(for: [User.self], inMemory: true)
-    .preferredColorScheme(.dark)
+    .withPreviewContainer()
 }

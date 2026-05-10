@@ -44,13 +44,11 @@ struct EditExpenseView: View {
         _selectedGroupID    = State(initialValue: expense.group?.id)
         _selectedPayerID    = State(initialValue: expense.paidBy?.id)
 
-        // Pre-fill participant IDs from existing participants
         let participantIDs = Set(
             (expense.participants ?? []).compactMap { $0.friend?.id }
         )
         _selectedParticipantIDs = State(initialValue: participantIDs)
 
-        // Pre-fill custom amounts and percentages
         var amounts:  [UUID: String] = [:]
         var percents: [UUID: String] = [:]
         for p in expense.participants ?? [] {
@@ -111,28 +109,40 @@ struct EditExpenseView: View {
             && (splitType != "percentage" || abs(percentageTotal - 100) < 0.01)
     }
 
-    private let categories: [(id: String, icon: String, label: String)] = [
-        ("general",       "square.grid.2x2.fill", "General"),
-        ("food",          "fork.knife",            "Food"),
-        ("transport",     "car.fill",              "Transport"),
-        ("accommodation", "house.fill",            "Stay"),
-        ("entertainment", "theatermasks.fill",     "Fun"),
-        ("shopping",      "cart.fill",             "Shopping"),
-        ("utilities",     "bolt.fill",             "Utilities"),
-        ("travel",        "airplane",              "Travel"),
-    ]
-
     // MARK: - Body
 
     var body: some View {
         NavigationStack {
             Form {
-                amountSection
-                detailsSection
-                splitWithSection
-                paidBySection
-                if participantList.count >= 2 { splitTypeSection }
-                notesSection
+                ExpenseFormSections.amountSection(amountText: $amountText)
+                ExpenseFormSections.detailsSection(description: $expenseDescription, date: $date, category: $category)
+                ExpenseFormSections.splitWithSection(
+                    selectedGroupID: $selectedGroupID,
+                    allGroups: allGroups,
+                    selectedGroup: selectedGroup,
+                    currentUser: currentUser,
+                    friends: friends,
+                    selectedParticipantIDs: $selectedParticipantIDs
+                )
+                ExpenseFormSections.paidBySection(
+                    selectedPayerID: $selectedPayerID,
+                    currentUser: currentUser,
+                    participantList: participantList
+                )
+                if participantList.count >= 2 {
+                    ExpenseFormSections.splitTypeSection(
+                        splitType: $splitType,
+                        participantList: participantList,
+                        currentUser: currentUser,
+                        amount: amount,
+                        equalShare: equalShare,
+                        customAmounts: $customAmounts,
+                        customTotal: customTotal,
+                        percentages: $percentages,
+                        percentageTotal: percentageTotal
+                    )
+                }
+                ExpenseFormSections.notesSection(notes: $notes)
             }
             .navigationTitle("Edit Expense")
             .navigationBarTitleDisplayMode(.inline)
@@ -149,224 +159,9 @@ struct EditExpenseView: View {
         }
     }
 
-    // MARK: - Sections (identical to AddExpenseView)
-
-    private var amountSection: some View {
-        Section {
-            VStack(spacing: 6) {
-                Text("Amount").font(.subheadline).foregroundStyle(.secondary)
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text("₹").font(.system(size: 30, weight: .semibold)).foregroundStyle(.secondary)
-                    TextField("0.00", text: $amountText)
-                        .keyboardType(.decimalPad)
-                        .font(.system(size: 52, weight: .bold, design: .rounded))
-                        .multilineTextAlignment(.center)
-                }
-            }
-            .frame(maxWidth: .infinity).padding(.vertical, 10)
-        }
-    }
-
-    private var detailsSection: some View {
-        Section("Details") {
-            TextField("What's this for?", text: $expenseDescription)
-                .textInputAutocapitalization(.sentences)
-            DatePicker("Date", selection: $date, displayedComponents: .date)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(categories, id: \.id) { cat in
-                        Button { category = cat.id } label: {
-                            VStack(spacing: 4) {
-                                Image(systemName: cat.icon).font(.title3)
-                                Text(cat.label).font(.caption2)
-                            }
-                            .frame(width: 64, height: 56)
-                            .background(RoundedRectangle(cornerRadius: 12)
-                                .fill(category == cat.id ? Color.cyan.opacity(0.18) : Color(.secondarySystemBackground)))
-                            .foregroundColor(category == cat.id ? .cyan : .secondary)
-                            .overlay(RoundedRectangle(cornerRadius: 12)
-                                .stroke(category == cat.id ? Color.cyan : .clear, lineWidth: 1.5))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.vertical, 4)
-            }
-        }
-    }
-
-    private var splitWithSection: some View {
-        Section("Split With") {
-            // Group picker — same as AddExpenseView, including "No Group"
-            Picker("Group", selection: $selectedGroupID) {
-                Text("No Group").tag(UUID?.none)
-                ForEach(allGroups) { g in
-                    Label(g.name, systemImage: g.iconName).tag(Optional(g.id))
-                }
-            }
-
-            if selectedGroupID == nil {
-                // Current user — always locked in
-                if let me = currentUser {
-                    HStack(spacing: 12) {
-                        avatarView(me)
-                        Text("\(me.name) (you)").foregroundStyle(.primary)
-                        Spacer()
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.cyan).font(.title3)
-                    }
-                }
-
-                if friends.isEmpty {
-                    Text("Add friends to split with them")
-                        .font(.subheadline).foregroundStyle(.secondary)
-                } else {
-                    ForEach(friends) { friend in
-                        let isSelected = selectedParticipantIDs.contains(friend.id)
-                        Button {
-                            if isSelected { selectedParticipantIDs.remove(friend.id) }
-                            else          { selectedParticipantIDs.insert(friend.id) }
-                        } label: {
-                            HStack(spacing: 12) {
-                                avatarView(friend)
-                                Text(friend.name).foregroundStyle(.primary)
-                                Spacer()
-                                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(isSelected ? .cyan : .secondary).font(.title3)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            } else {
-                let members = selectedGroup?.members ?? []
-                if members.isEmpty {
-                    Text("This group has no members yet").foregroundStyle(.secondary)
-                } else {
-                    ForEach(members) { member in
-                        HStack(spacing: 12) {
-                            avatarView(member)
-                            Text(member.id == currentUser?.id ? "\(member.name) (you)" : member.name)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private var paidBySection: some View {
-        Section("Paid By") {
-            Picker("Who paid?", selection: $selectedPayerID) {
-                Text(currentUser.map { "\($0.name) (you)" } ?? "You")
-                    .tag(UUID?.none)
-                ForEach(participantList.filter { $0.id != currentUser?.id }) { p in
-                    Text(p.name).tag(Optional(p.id))
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var splitTypeSection: some View {
-        Section("Split Type") {
-            Picker("How to split", selection: $splitType) {
-                Text("Equal").tag("equal")
-                Text("Custom ₹").tag("custom")
-                Text("By %").tag("percentage")
-            }
-            .pickerStyle(.segmented)
-
-            switch splitType {
-            case "equal":      equalSplitRows
-            case "custom":     customSplitRows
-            case "percentage": percentageSplitRows
-            default:           EmptyView()
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var equalSplitRows: some View {
-        ForEach(participantList) { p in
-            HStack {
-                avatarView(p)
-                Text(p.id == currentUser?.id ? "\(p.name) (you)" : p.name)
-                Spacer()
-                Text(amount > 0 ? "₹\(equalShare, specifier: "%.2f")" : "—")
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var customSplitRows: some View {
-        ForEach(participantList) { p in
-            HStack(spacing: 8) {
-                avatarView(p)
-                Text(p.id == currentUser?.id ? "\(p.name) (you)" : p.name)
-                Spacer()
-                Text("₹").foregroundStyle(.secondary)
-                TextField("0.00", text: Binding(
-                    get: { customAmounts[p.id] ?? "" },
-                    set: { customAmounts[p.id] = $0 }
-                ))
-                .keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(width: 80)
-            }
-        }
-        HStack {
-            Text("Assigned").font(.caption).foregroundStyle(.secondary)
-            Spacer()
-            Text("₹\(customTotal, specifier: "%.2f") / ₹\(amount, specifier: "%.2f")")
-                .font(.caption)
-                .foregroundColor(abs(customTotal - amount) < 0.01 ? .green : .red)
-        }
-    }
-
-    @ViewBuilder
-    private var percentageSplitRows: some View {
-        ForEach(participantList) { p in
-            HStack(spacing: 8) {
-                avatarView(p)
-                Text(p.id == currentUser?.id ? "\(p.name) (you)" : p.name)
-                Spacer()
-                TextField("0", text: Binding(
-                    get: { percentages[p.id] ?? "" },
-                    set: { percentages[p.id] = $0 }
-                ))
-                .keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(width: 60)
-                Text("%").foregroundStyle(.secondary)
-            }
-        }
-        HStack {
-            Text("Total").font(.caption).foregroundStyle(.secondary)
-            Spacer()
-            Text("\(percentageTotal, specifier: "%.1f")% / 100%")
-                .font(.caption)
-                .foregroundColor(abs(percentageTotal - 100) < 0.01 ? .green : .red)
-        }
-    }
-
-    private var notesSection: some View {
-        Section("Notes (optional)") {
-            TextField("Add a note…", text: $notes, axis: .vertical).lineLimit(3...6)
-        }
-    }
-
-    @ViewBuilder
-    private func avatarView(_ user: User) -> some View {
-        ZStack {
-            Circle().fill(Color(hex: user.profileColor).opacity(0.2)).frame(width: 30, height: 30)
-            Text(String(user.name.prefix(1))).font(.footnote).fontWeight(.semibold)
-                .foregroundColor(Color(hex: user.profileColor))
-        }
-    }
-
     // MARK: - Save
-    // Mutates the existing Expense in-place — SwiftData propagates
-    // changes to every view that observes this object automatically.
 
     private func saveChanges() {
-        // Basic fields
         expense.expenseDescription = expenseDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         expense.amount             = amount
         expense.category           = category
@@ -374,19 +169,15 @@ struct EditExpenseView: View {
         expense.notes              = notes.isEmpty ? nil : notes
         expense.splitType          = splitType
 
-        // Payer — nil means current user paid
         expense.paidBy = selectedPayerID.flatMap { id in allUsers.first { $0.id == id } }
 
-        // Group — handle moves between groups and to/from no-group
         let oldGroup = expense.group
         let newGroup = selectedGroupID.flatMap { id in allGroups.first { $0.id == id } }
 
         if oldGroup?.id != newGroup?.id {
-            // Remove from old group's expenses list
             if let old = oldGroup {
                 old.expenses = (old.expenses ?? []).filter { $0.id != expense.id }
             }
-            // Add to new group's expenses list
             if let new = newGroup {
                 var list = new.expenses ?? []
                 list.append(expense)
@@ -395,7 +186,6 @@ struct EditExpenseView: View {
             expense.group = newGroup
         }
 
-        // Participants — delete old, insert fresh
         (expense.participants ?? []).forEach { modelContext.delete($0) }
 
         let newParticipants: [ExpenseParticipant] = participantList.map { user in
