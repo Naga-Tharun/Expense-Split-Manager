@@ -167,6 +167,7 @@ struct FilteredExpensesList: View {
     @Binding var sortOrder: ExpenseSortOption
 
     var onDelete: ((IndexSet) -> Void)? = nil
+    @State private var pendingDelete: IndexSet? = nil
 
     var body: some View {
         Section {
@@ -204,7 +205,9 @@ struct FilteredExpensesList: View {
                     }
                 }
                 .onDelete { offsets in
-                    onDelete?(offsets)
+                    if onDelete != nil {
+                        pendingDelete = offsets
+                    }
                 }
             }
         } header: {
@@ -217,6 +220,21 @@ struct FilteredExpensesList: View {
                         .foregroundStyle(.secondary)
                 }
             }
+        }
+        .alert("Delete Expense?", isPresented: Binding(
+            get: { pendingDelete != nil },
+            set: { if !$0 { pendingDelete = nil } }
+        )) {
+            Button("Delete", role: .destructive) {
+                if let offsets = pendingDelete {
+                    Haptics.warning()
+                    onDelete?(offsets)
+                    pendingDelete = nil
+                }
+            }
+            Button("Cancel", role: .cancel) { pendingDelete = nil }
+        } message: {
+            Text("This expense will be permanently removed.")
         }
     }
 }

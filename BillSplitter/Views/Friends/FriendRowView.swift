@@ -17,14 +17,7 @@ struct FriendRowView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(Color(hex: friend.profileColor).opacity(0.2))
-                    .frame(width: 44, height: 44)
-                Text(String(friend.name.prefix(1)))
-                    .font(.headline).fontWeight(.semibold)
-                    .foregroundColor(Color(hex: friend.profileColor))
-            }
+            AvatarView(user: friend, size: 44)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(friend.name)

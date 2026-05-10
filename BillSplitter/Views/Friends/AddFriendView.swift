@@ -8,6 +8,7 @@ struct AddFriendView: View {
     @State private var name: String = ""
     @State private var selectedColorHex: String = "#007AFF"
     @State private var selectedColor: Color = Color(hex: "#007AFF")
+    @State private var saveError = SaveErrorState()
     
     // Simple palette of colors to choose from
     private let colorOptions: [String] = ["#007AFF", "#FF9500", "#34C759", "#FF3B30", "#5856D6", "#FF2D55"]
@@ -70,16 +71,18 @@ struct AddFriendView: View {
                         .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
+            .saveErrorAlert($saveError)
         }
     }
-    
+
     private func addFriend() {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { return }
-        
+
         let newUser = User(name: trimmedName, profileColor: selectedColorHex)
         modelContext.insert(newUser)
-        dismiss()
+        saveError.perform { try modelContext.save() }
+        if !saveError.showAlert { dismiss() }
     }
 }
 

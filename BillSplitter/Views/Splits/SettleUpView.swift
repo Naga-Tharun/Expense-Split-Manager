@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import os
 
 struct SettleUpView: View {
     @Environment(\.dismiss)      private var dismiss
@@ -18,6 +19,7 @@ struct SettleUpView: View {
     @State private var paymentMethod: PaymentMethod = .cash
     @State private var notes           = ""
     @State private var date            = Date()
+    @State private var saveError       = SaveErrorState()
 
     let prefilledFrom:   User?
     let prefilledTo:     User?
@@ -48,6 +50,7 @@ struct SettleUpView: View {
                 detailsSection
                 if isValid { summarySection }
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Settle Up")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -56,8 +59,13 @@ struct SettleUpView: View {
                     Button("Record") { recordSettlement() }
                         .fontWeight(.semibold).disabled(!isValid)
                 }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil) }
+                }
             }
             .onAppear { applyPrefill() }
+            .saveErrorAlert($saveError)
         }
     }
 
@@ -146,19 +154,25 @@ struct SettleUpView: View {
         if let a = prefilledAmount      { amountText = String(format: "%.2f", a) }
     }
 
+    private static let logger = Logger(subsystem: "com.billsplitter", category: "settlements")
+
     private func recordSettlement() {
+        let amount = Double(amountText) ?? 0
         let s = Settlement(
             fromFriend:    selectedFrom,
             toFriend:      selectedTo,
-            amount:        Double(amountText) ?? 0,
+            amount:        amount,
             date:          date,
             paymentMethod: paymentMethod,
             notes:         notes.isEmpty ? nil : notes,
             isConfirmed:   true
         )
         modelContext.insert(s)
-        try? modelContext.save()
-        dismiss()
+        saveError.perform { try modelContext.save() }
+        if !saveError.showAlert {
+            Self.logger.info("Settlement recorded: \(selectedFrom?.name ?? "You") → \(selectedTo?.name ?? "You"), amount=\(amount, format: .fixed(precision: 2)), method=\(paymentMethod.rawValue)")
+            dismiss()
+        }
     }
 }
 

@@ -33,6 +33,7 @@ struct EditExpenseView: View {
     @State private var selectedPhoto: PhotosPickerItem? = nil
     @State private var receiptImageData: Data?
     @State private var isLoadingImage = false
+    @State private var saveError      = SaveErrorState()
 
     init(expense: Expense) {
         self.expense = expense
@@ -65,11 +66,10 @@ struct EditExpenseView: View {
         _percentages   = State(initialValue: percents)
     }
 
-    // MARK: - Computed
+    // MARK: - Computed (delegated to ExpenseFormLogic)
 
     private var currentUser: User? { CurrentUserManager.currentUser(from: allUsers) }
     private var friends: [User] { CurrentUserManager.friends(from: allUsers) }
-
     private var amount: Double { Double(amountText) ?? 0 }
 
     private var selectedGroup: Group? {
@@ -78,32 +78,25 @@ struct EditExpenseView: View {
     }
 
     private var participantList: [User] {
-        if let g = selectedGroup { return g.members ?? [] }
-        var list = friends.filter { selectedParticipantIDs.contains($0.id) }
-        if let me = currentUser { list.insert(me, at: 0) }
-        return list
+        ExpenseFormLogic.participantList(
+            selectedGroup: selectedGroup, friends: friends,
+            selectedParticipantIDs: selectedParticipantIDs, currentUser: currentUser
+        )
     }
 
     private var equalShare: Double {
-        let n = Double(participantList.count)
-        guard n > 0 else { return 0 }
-        return amount / n
+        ExpenseFormLogic.equalShare(amount: amount, participantCount: participantList.count)
     }
 
-    private var customTotal: Double {
-        customAmounts.values.compactMap { Double($0) }.reduce(0, +)
-    }
-
-    private var percentageTotal: Double {
-        percentages.values.compactMap { Double($0) }.reduce(0, +)
-    }
+    private var customTotal: Double    { ExpenseFormLogic.customTotal(customAmounts) }
+    private var percentageTotal: Double { ExpenseFormLogic.percentageTotal(percentages) }
 
     private var isValid: Bool {
-        !expenseDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && amount > 0
-            && participantList.count >= 2
-            && (splitType != .custom     || abs(customTotal - amount) < 0.01)
-            && (splitType != .percentage || abs(percentageTotal - 100) < 0.01)
+        ExpenseFormLogic.isValid(
+            description: expenseDescription, amount: amount,
+            participantCount: participantList.count, splitType: splitType,
+            customTotal: customTotal, percentageTotal: percentageTotal
+        )
     }
 
     // MARK: - Body
@@ -146,6 +139,7 @@ struct EditExpenseView: View {
                     isLoadingImage: $isLoadingImage
                 )
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Edit Expense")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -157,7 +151,12 @@ struct EditExpenseView: View {
                         .fontWeight(.semibold)
                         .disabled(!isValid)
                 }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil) }
+                }
             }
+            .saveErrorAlert($saveError)
         }
     }
 
@@ -197,23 +196,15 @@ struct EditExpenseView: View {
 
         (expense.participants ?? []).forEach { modelContext.delete($0) }
 
-        let newParticipants: [ExpenseParticipant] = participantList.map { user in
-            let ep = ExpenseParticipant(friend: user)
-            switch splitType {
-            case .equal:
-                ep.amountOwed = equalShare
-            case .custom:
-                ep.amountOwed = Double(customAmounts[user.id] ?? "0") ?? 0
-            case .percentage:
-                ep.amountOwed = amount * ((Double(percentages[user.id] ?? "0") ?? 0) / 100.0)
-            }
-            return ep
-        }
+        let newParticipants = ExpenseFormLogic.buildParticipants(
+            from: participantList, splitType: splitType,
+            amount: amount, customAmounts: customAmounts, percentages: percentages
+        )
         newParticipants.forEach { modelContext.insert($0) }
         expense.participants = newParticipants
 
-        try? modelContext.save()
-        dismiss()
+        saveError.perform { try modelContext.save() }
+        if !saveError.showAlert { dismiss() }
     }
 }
 

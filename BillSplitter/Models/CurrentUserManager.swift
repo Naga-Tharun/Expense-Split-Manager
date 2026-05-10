@@ -8,6 +8,9 @@
 
 import SwiftData
 import Foundation
+import os
+
+private let logger = Logger(subsystem: "com.billsplitter", category: "currentUser")
 
 enum CurrentUserManager {
 
@@ -47,7 +50,11 @@ enum CurrentUserManager {
         let color = UserDefaults.standard.string(forKey: colorKey) ?? "#00BCD4"
         let me    = User(name: name, profileColor: color)
         context.insert(me)
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            logger.error("Failed to save new user: \(error.localizedDescription)")
+        }
 
         UserDefaults.standard.set(me.id.uuidString, forKey: idKey)
         UserDefaults.standard.synchronize()
@@ -81,7 +88,11 @@ enum CurrentUserManager {
               let me   = allUsers.first(where: { $0.id == uuid }) else { return }
         me.name         = name
         me.profileColor = color
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            logger.error("Failed to update profile: \(error.localizedDescription)")
+        }
         UserDefaults.standard.set(name,  forKey: nameKey)
         UserDefaults.standard.set(color, forKey: colorKey)
         UserDefaults.standard.synchronize()

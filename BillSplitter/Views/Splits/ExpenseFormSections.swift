@@ -335,17 +335,10 @@ struct ExpenseFormSections {
         }
     }
 
-    // MARK: - Avatar Helper
+    // MARK: - Avatar Helper (delegates to shared AvatarView)
 
     @ViewBuilder
     static func avatarView(_ user: User, size: CGFloat = 30) -> some View {
-        ZStack {
-            Circle()
-                .fill(Color(hex: user.profileColor).opacity(0.2))
-                .frame(width: size, height: size)
-            Text(String(user.name.prefix(1)))
-                .font(.footnote).fontWeight(.semibold)
-                .foregroundColor(Color(hex: user.profileColor))
-        }
+        AvatarView(user: user, size: size)
     }
 }

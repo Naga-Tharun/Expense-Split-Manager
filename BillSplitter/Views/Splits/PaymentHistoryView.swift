@@ -10,6 +10,8 @@ struct PaymentHistoryView: View {
     @Environment(\.dismiss)      private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Settlement.date, order: .reverse) private var settlements: [Settlement]
+    @State private var pendingDelete: IndexSet? = nil
+    @State private var saveError = SaveErrorState()
 
     var body: some View {
         NavigationStack {
@@ -21,6 +23,23 @@ struct PaymentHistoryView: View {
                         Button("Done") { dismiss() }.fontWeight(.semibold)
                     }
                 }
+                .alert("Delete Settlement?", isPresented: Binding(
+                    get: { pendingDelete != nil },
+                    set: { if !$0 { pendingDelete = nil } }
+                )) {
+                    Button("Delete", role: .destructive) {
+                        if let offsets = pendingDelete {
+                            Haptics.warning()
+                            offsets.map { settlements[$0] }.forEach { modelContext.delete($0) }
+                            saveError.perform { try modelContext.save() }
+                            pendingDelete = nil
+                        }
+                    }
+                    Button("Cancel", role: .cancel) { pendingDelete = nil }
+                } message: {
+                    Text("This settlement record will be permanently removed.")
+                }
+                .saveErrorAlert($saveError)
         }
     }
 
@@ -38,7 +57,7 @@ struct PaymentHistoryView: View {
                     settlementRow(s)
                 }
                 .onDelete { offsets in
-                    offsets.map { settlements[$0] }.forEach { modelContext.delete($0) }
+                    pendingDelete = offsets
                 }
             }
         }

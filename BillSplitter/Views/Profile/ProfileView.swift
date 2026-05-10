@@ -21,6 +21,7 @@ struct ProfileView: View {
     @State private var draftName      = ""
     @State private var draftColorHex  = "#00BCD4"
     @State private var showClearAlert = false
+    @State private var saveError      = SaveErrorState()
 
     private var currentUser: User? { CurrentUserManager.currentUser(from: allUsers) }
 
@@ -54,6 +55,7 @@ struct ProfileView: View {
             } message: {
                 Text("Deletes all expenses, groups, and settlements. Cannot be undone.")
             }
+            .saveErrorAlert($saveError)
         }
     }
 
@@ -224,7 +226,7 @@ struct ProfileView: View {
         user.profileColor = color
         UserDefaults.standard.set(name,  forKey: "userName")
         UserDefaults.standard.set(color, forKey: "userColor")
-        try? modelContext.save()
+        saveError.perform { try modelContext.save() }
     }
 
     private func clearAllData() {
@@ -232,7 +234,7 @@ struct ProfileView: View {
         expenses.forEach            { modelContext.delete($0) }
         groups.forEach              { modelContext.delete($0) }
         settlements.forEach         { modelContext.delete($0) }
-        try? modelContext.save()
+        saveError.perform { try modelContext.save() }
     }
 }
 

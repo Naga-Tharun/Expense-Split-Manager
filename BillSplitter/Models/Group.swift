@@ -5,7 +5,6 @@
 //  Created by Naga Tharun Makkena on 23/11/25.
 //
 
-import SwiftUI
 import SwiftData
 import Foundation
 

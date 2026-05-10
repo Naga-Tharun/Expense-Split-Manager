@@ -16,6 +16,7 @@ struct ExpenseDetailView: View {
     @State private var showDeleteAlert  = false
     @State private var showEditSheet   = false
     @State private var showReceiptFull = false
+    @State private var saveError       = SaveErrorState()
 
     private var currentUserID: UUID? { CurrentUserManager.currentUserID }
 
@@ -70,9 +71,15 @@ struct ExpenseDetailView: View {
             }
         }
         .alert("Delete Expense?", isPresented: $showDeleteAlert) {
-            Button("Delete", role: .destructive) { modelContext.delete(expense); dismiss() }
+            Button("Delete", role: .destructive) {
+                Haptics.warning()
+                modelContext.delete(expense)
+                saveError.perform { try modelContext.save() }
+                dismiss()
+            }
             Button("Cancel", role: .cancel) { }
         } message: { Text("This cannot be undone.") }
+        .saveErrorAlert($saveError)
     }
 
     private var headerSection: some View {
@@ -121,11 +128,7 @@ struct ExpenseDetailView: View {
             ForEach(participants) { p in
                 if let friend = p.friend {
                     HStack(spacing: 12) {
-                        ZStack {
-                            Circle().fill(Color(hex: friend.profileColor).opacity(0.2)).frame(width: 34, height: 34)
-                            Text(String(friend.name.prefix(1))).font(.subheadline).fontWeight(.semibold)
-                                .foregroundColor(Color(hex: friend.profileColor))
-                        }
+                        AvatarView(user: friend, size: 34)
                         Text(friend.id == currentUserID ? "\(friend.name) (you)" : friend.name)
                         Spacer()
                         Text("\(CurrencyHelper.symbol)\(p.amountOwed, specifier: "%.2f")").fontWeight(.semibold)

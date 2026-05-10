@@ -5,6 +5,9 @@
 
 import SwiftUI
 import SwiftData
+import os
+
+private let logger = Logger(subsystem: "com.billsplitter", category: "app")
 
 @main
 struct BillSplitterApp: App {
@@ -13,6 +16,7 @@ struct BillSplitterApp: App {
     @State private var balanceCache = BalanceCache()
 
     init() {
+        logger.info("BillSplitter launching")
         let schema = Schema([
             User.self, Group.self, Expense.self,
             ExpenseParticipant.self, Settlement.self,
@@ -28,6 +32,7 @@ struct BillSplitterApp: App {
                            storeURL.deletingPathExtension().appendingPathExtension("sqlite-wal"),
                            storeURL.deletingPathExtension().appendingPathExtension("sqlite-shm")]
             related.forEach { try? FileManager.default.removeItem(at: $0) }
+            logger.warning("Schema migration failed — store reset to fresh state")
 
             guard let freshContainer = try? ModelContainer(for: schema, configurations: [config]) else {
                 fatalError("Could not create ModelContainer even after reset")
@@ -36,6 +41,7 @@ struct BillSplitterApp: App {
         }
 
         CurrentUserManager.resolve(in: sharedModelContainer)
+        logger.info("App initialized — container ready, current user resolved")
     }
 
     var body: some Scene {

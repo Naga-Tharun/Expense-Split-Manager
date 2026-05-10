@@ -5,7 +5,6 @@
 //  Created by Naga Tharun Makkena on 23/11/25.
 //
 
-import SwiftUI
 import SwiftData
 import Foundation
 
@@ -13,8 +12,8 @@ import Foundation
 @Model
 final class Settlement {
     @Attribute(.unique) var id: UUID
-    var fromFriend: User?
-    var toFriend: User?
+    @Relationship(deleteRule: .nullify) var fromFriend: User?
+    @Relationship(deleteRule: .nullify) var toFriend: User?
     var amount: Double
     var date: Date
     @Attribute(originalName: "paymentMethod") var paymentMethodRaw: String?

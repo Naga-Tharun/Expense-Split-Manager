@@ -5,7 +5,6 @@
 //  Created by Naga Tharun Makkena on 23/11/25.
 //
 
-import SwiftUI
 import SwiftData
 import Foundation
 
@@ -18,7 +17,7 @@ final class Expense {
     @Attribute(originalName: "category") var categoryRaw: String
     var date: Date
     var notes: String?
-    var receiptImageData: Data?
+    @Attribute(.externalStorage) var receiptImageData: Data?
 
     // Who paid
     var paidBy: User?

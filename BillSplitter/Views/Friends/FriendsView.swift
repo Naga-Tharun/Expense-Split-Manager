@@ -16,6 +16,7 @@ struct FriendsView: View {
 
     @State private var isPresentingAddFriend = false
     @State private var friendToDelete: User? = nil
+    @State private var saveError = SaveErrorState()
 
     private var currentUserID: UUID? { CurrentUserManager.currentUserID }
 
@@ -42,6 +43,7 @@ struct FriendsView: View {
                 )) {
                     Button("Delete", role: .destructive) {
                         if let friend = friendToDelete {
+                            Haptics.warning()
                             deleteFriend(friend)
                             friendToDelete = nil
                         }
@@ -52,6 +54,7 @@ struct FriendsView: View {
                         Text("Remove \(friend.name) and clean up their related data? This cannot be undone.")
                     }
                 }
+                .saveErrorAlert($saveError)
         }
     }
 
@@ -96,7 +99,7 @@ struct FriendsView: View {
         orphanedSettlements.forEach { modelContext.delete($0) }
 
         modelContext.delete(friend)
-        try? modelContext.save()
+        saveError.perform { try modelContext.save() }
         refreshCache()
     }
 }

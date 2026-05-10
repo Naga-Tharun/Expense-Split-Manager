@@ -13,6 +13,9 @@
 import SwiftData
 import Foundation
 import Observation
+import os
+
+private let logger = Logger(subsystem: "com.billsplitter", category: "balances")
 
 @Observable
 final class BalanceCache {
@@ -39,6 +42,7 @@ final class BalanceCache {
         )
         totalOwedToYou = BalanceCalculator.totalOwedToYou(balances)
         totalYouOwe    = BalanceCalculator.totalYouOwe(balances)
+        logger.info("Balances refreshed: \(self.balances.count) friends, net=\(self.netBalance, format: .fixed(precision: 2)), owed=\(self.totalOwedToYou, format: .fixed(precision: 2)), owe=\(self.totalYouOwe, format: .fixed(precision: 2))")
     }
 
     /// Balance for a single friend

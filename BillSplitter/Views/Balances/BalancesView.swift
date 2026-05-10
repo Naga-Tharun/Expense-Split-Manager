@@ -110,7 +110,7 @@ struct BalancesView: View {
                 ContentUnavailableView(
                     "No Friends Yet",
                     systemImage: "person.2.fill",
-                    description: Text("Add friends to track balances")
+                    description: Text("Add friends to start tracking balances")
                 )
                 .listRowBackground(Color.clear)
             } else {
@@ -124,11 +124,7 @@ struct BalancesView: View {
     @ViewBuilder
     private func friendRow(friend: User, balance: Double) -> some View {
         HStack(spacing: 12) {
-            ZStack {
-                Circle().fill(Color(hex: friend.profileColor).opacity(0.2)).frame(width: 46, height: 46)
-                Text(String(friend.name.prefix(1))).font(.headline)
-                    .foregroundColor(Color(hex: friend.profileColor))
-            }
+            AvatarView(user: friend, size: 46)
             VStack(alignment: .leading, spacing: 2) {
                 Text(friend.name).font(.body).fontWeight(.medium)
                 if abs(balance) < 0.01 {

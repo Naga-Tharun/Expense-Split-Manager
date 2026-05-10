@@ -16,6 +16,7 @@ struct AddSplitView: View {
     @State private var showAddFriend  = false
     @State private var showAddGroup   = false
     @State private var showSettleUp   = false
+    @State private var saveError      = SaveErrorState()
 
     // Search & filter state
     @State private var searchText      = ""
@@ -60,6 +61,7 @@ struct AddSplitView: View {
                 ) { offsets in
                     let toDelete = offsets.map { filteredExpenses[$0] }
                     toDelete.forEach { modelContext.delete($0) }
+                    saveError.perform { try modelContext.save() }
                 }
             }
             .navigationTitle("Activity")
@@ -72,6 +74,7 @@ struct AddSplitView: View {
             .sheet(isPresented: $showAddFriend)  { AddFriendView() }
             .sheet(isPresented: $showAddGroup)   { AddGroupView() }
             .sheet(isPresented: $showSettleUp)   { SettleUpView() }
+            .saveErrorAlert($saveError)
         }
     }
 

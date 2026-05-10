@@ -92,12 +92,7 @@ struct FriendDetailView: View {
     private var headerSection: some View {
         Section {
             VStack(spacing: 14) {
-                ZStack {
-                    Circle().fill(Color(hex: friend.profileColor).opacity(0.2)).frame(width: 76, height: 76)
-                    Text(String(friend.name.prefix(1)).uppercased())
-                        .font(.system(size: 30, weight: .bold, design: .rounded))
-                        .foregroundColor(Color(hex: friend.profileColor))
-                }
+                AvatarView(user: friend, size: 76)
                 Text(friend.name).font(.title2).fontWeight(.bold)
 
                 if abs(balance) < 0.01 {
@@ -172,7 +167,7 @@ struct FriendDetailView: View {
     let container = PreviewSampleData.container()
     let ctx       = container.mainContext
     let users     = (try? ctx.fetch(FetchDescriptor<User>())) ?? []
-    let friend    = users.first { $0.name == "Alex" } ?? users.last!
+    let friend    = users.first { $0.name == "Alex" } ?? users.last ?? User(name: "Preview Friend", profileColor: "#007AFF")
 
     return NavigationStack {
         FriendDetailView(friend: friend)

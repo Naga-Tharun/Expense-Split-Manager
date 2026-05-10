@@ -18,6 +18,7 @@ struct AddGroupView: View {
     @State private var description      = ""
     @State private var selectedIcon     = "person.3.fill"
     @State private var showIconPicker   = false
+    @State private var saveError        = SaveErrorState()
     @State private var selectedMemberIDs: Set<UUID> = []
 
     private let colorOptions   = ["#007AFF", "#FF9500", "#34C759", "#FF3B30", "#5856D6", "#FF2D55"]
@@ -89,11 +90,7 @@ struct AddGroupView: View {
                 Section("Members") {
                     if let me = currentUser {
                         HStack(spacing: 12) {
-                            ZStack {
-                                Circle().fill(Color(hex: me.profileColor).opacity(0.2)).frame(width: 32, height: 32)
-                                Text(String(me.name.prefix(1))).font(.footnote).fontWeight(.semibold)
-                                    .foregroundStyle(Color(hex: me.profileColor))
-                            }
+                            AvatarView(user: me, size: 32)
                             Text("\(me.name) (you)")
                             Spacer()
                             Image(systemName: "checkmark.circle.fill")
@@ -108,11 +105,7 @@ struct AddGroupView: View {
                             else          { selectedMemberIDs.insert(friend.id) }
                         } label: {
                             HStack(spacing: 12) {
-                                ZStack {
-                                    Circle().fill(Color(hex: friend.profileColor).opacity(0.2)).frame(width: 32, height: 32)
-                                    Text(String(friend.name.prefix(1))).font(.footnote).fontWeight(.semibold)
-                                        .foregroundStyle(Color(hex: friend.profileColor))
-                                }
+                                AvatarView(user: friend, size: 32)
                                 Text(friend.name).foregroundStyle(.primary)
                                 Spacer()
                                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
@@ -138,6 +131,7 @@ struct AddGroupView: View {
                     showIconPicker = false
                 }
             }
+            .saveErrorAlert($saveError)
         }
     }
 
@@ -159,8 +153,8 @@ struct AddGroupView: View {
         newGroup.members = members
 
         modelContext.insert(newGroup)
-        try? modelContext.save()
-        dismiss()
+        saveError.perform { try modelContext.save() }
+        if !saveError.showAlert { dismiss() }
     }
 }
 

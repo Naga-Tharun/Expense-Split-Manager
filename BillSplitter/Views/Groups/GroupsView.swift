@@ -12,6 +12,7 @@ struct GroupsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Group.createdAt, order: .reverse) private var groups: [Group]
     @State private var showingAddGroup = false
+    @State private var saveError = SaveErrorState()
     
     var body: some View {
         NavigationStack {
@@ -39,28 +40,15 @@ struct GroupsView: View {
             .sheet(isPresented: $showingAddGroup) {
                 AddGroupView()
             }
+            .saveErrorAlert($saveError)
         }
     }
-    
-    private func addSampleGroup() {
-        let groupNames = ["Weekend Trip", "Roommates", "Office Lunch", "Vacation 2025"]
-        let icons = ["beach.umbrella.fill", "house.fill", "fork.knife", "airplane"]
-        let colors = ["#FF9500", "#34C759", "#5856D6", "#007AFF"]
-        let index = groups.count % groupNames.count
-        
-        let newGroup = Group(
-            name: groupNames[index],
-            groupDescription: "Shared expenses for \(groupNames[index])",
-            iconName: icons[index],
-            colorHex: colors[index]
-        )
-        modelContext.insert(newGroup)
-    }
-    
+
     private func deleteGroups(offsets: IndexSet) {
         for index in offsets {
             modelContext.delete(groups[index])
         }
+        saveError.perform { try modelContext.save() }
     }
 }
 

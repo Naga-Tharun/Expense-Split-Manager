@@ -95,7 +95,7 @@ enum PaymentMethod: String, Codable, CaseIterable, Identifiable {
         case .upi:          return "iphone.radiowaves.left.and.right"
         case .bankTransfer: return "building.columns.fill"
         case .card:         return "creditcard.fill"
-        case .other:        return "banknote.fill"
+        case .other:        return "ellipsis.circle.fill"
         }
     }
 }
