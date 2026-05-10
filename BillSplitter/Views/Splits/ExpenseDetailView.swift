@@ -11,17 +11,16 @@ struct ExpenseDetailView: View {
     @Environment(\.dismiss)      private var dismiss
 
     @Query(sort: \User.name) private var allUsers: [User]
-    @AppStorage("currentUserID") private var currentUserIDString: String = ""
-
     let expense: Expense
 
-    @State private var showDeleteAlert = false
+    @State private var showDeleteAlert  = false
     @State private var showEditSheet   = false
+    @State private var showReceiptFull = false
 
-    private var currentUserID: UUID? { UUID(uuidString: currentUserIDString) }
+    private var currentUserID: UUID? { CurrentUserManager.currentUserID }
 
     private var categoryIcon: String {
-        ExpenseCategories.icon(for: expense.category)
+        expense.category.icon
     }
 
     private var paidByLabel: String {
@@ -35,6 +34,9 @@ struct ExpenseDetailView: View {
         List {
             headerSection
             detailsSection
+            if let data = expense.receiptImageData, let uiImage = UIImage(data: data) {
+                receiptSection(uiImage)
+            }
             if let participants = expense.participants, !participants.isEmpty {
                 splitSection(participants)
             }
@@ -48,6 +50,25 @@ struct ExpenseDetailView: View {
             }
         }
         .sheet(isPresented: $showEditSheet) { EditExpenseView(expense: expense) }
+        .fullScreenCover(isPresented: $showReceiptFull) {
+            if let data = expense.receiptImageData, let uiImage = UIImage(data: data) {
+                ZStack(alignment: .topTrailing) {
+                    Color.black.ignoresSafeArea()
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    Button {
+                        showReceiptFull = false
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title)
+                            .foregroundStyle(.white.opacity(0.8))
+                            .padding()
+                    }
+                }
+            }
+        }
         .alert("Delete Expense?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) { modelContext.delete(expense); dismiss() }
             Button("Cancel", role: .cancel) { }
@@ -65,7 +86,7 @@ struct ExpenseDetailView: View {
                     .font(.title2).fontWeight(.bold).multilineTextAlignment(.center)
                 Text("\(CurrencyHelper.symbol)\(expense.amount, specifier: "%.2f")")
                     .font(.system(size: 40, weight: .bold, design: .rounded))
-                Text(expense.category.capitalized)
+                Text(expense.category.label)
                     .font(.caption).padding(.horizontal, 10).padding(.vertical, 4)
                     .background(Capsule().fill(Color.cyan.opacity(0.15))).foregroundStyle(.cyan)
             }
@@ -77,7 +98,7 @@ struct ExpenseDetailView: View {
         Section("Details") {
             detailRow("Date",       value: expense.date.formatted(date: .long, time: .omitted), icon: "calendar")
             detailRow("Paid by",    value: paidByLabel, icon: "person.fill")
-            detailRow("Split type", value: expense.splitType.capitalized, icon: "arrow.triangle.branch")
+            detailRow("Split type", value: expense.splitType.label, icon: "arrow.triangle.branch")
             if let group = expense.group {
                 HStack {
                     Label("Group", systemImage: group.iconName).foregroundStyle(.secondary)
@@ -114,6 +135,26 @@ struct ExpenseDetailView: View {
         }
     }
 
+    @ViewBuilder
+    private func receiptSection(_ uiImage: UIImage) -> some View {
+        Section("Receipt") {
+            Button { showReceiptFull = true } label: {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxHeight: 200)
+                    .frame(maxWidth: .infinity)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+            .listRowBackground(Color.clear)
+        }
+    }
+
     private var deleteSection: some View {
         Section {
             Button(role: .destructive) { showDeleteAlert = true } label: {
@@ -146,7 +187,7 @@ struct ExpenseDetailView: View {
     context.insert(friend)
 
     // Sample expense with a participant split
-    let expense   = Expense(expenseDescription: "Dinner at Spice Garden", amount: 900, category: "food")
+    let expense   = Expense(expenseDescription: "Dinner at Spice Garden", amount: 900, category: .food)
     let p1        = ExpenseParticipant(friend: me,     amountOwed: 450)
     let p2        = ExpenseParticipant(friend: friend, amountOwed: 450)
     context.insert(p1); context.insert(p2)

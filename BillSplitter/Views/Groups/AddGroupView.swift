@@ -27,16 +27,8 @@ struct AddGroupView: View {
         "beach.umbrella.fill", "suitcase.fill", "briefcase.fill", "backpack.fill"
     ]
 
-    /// Read the current user's UUID directly from UserDefaults — always set by BillSplitterApp.init()
-    private var currentUser: User? {
-        guard let raw  = UserDefaults.standard.string(forKey: "currentUserID"),
-              let uuid = UUID(uuidString: raw) else { return nil }
-        return allUsers.first { $0.id == uuid }
-    }
-
-    private var friends: [User] {
-        allUsers.filter { $0.id != currentUser?.id }
-    }
+    private var currentUser: User? { CurrentUserManager.currentUser(from: allUsers) }
+    private var friends: [User] { CurrentUserManager.friends(from: allUsers) }
 
     var body: some View {
         NavigationStack {

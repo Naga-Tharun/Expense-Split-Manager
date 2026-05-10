@@ -19,10 +19,8 @@ struct BalanceCalculator {
 
         for expense in expenses {
             guard let participants = expense.participants,
-                  !participants.isEmpty else { continue }
-
-            // Who paid?
-            let payerID: UUID = expense.paidBy?.id ?? currentUserID
+                  !participants.isEmpty,
+                  let payerID = expense.paidBy?.id else { continue }
 
             // Build a map: participantID → amountOwed
             var owedMap: [UUID: Double] = [:]
@@ -62,6 +60,17 @@ struct BalanceCalculator {
         }
 
         return balances
+    }
+
+    /// Balance for a single friend — avoids computing the full map
+    /// when only one value is needed (e.g., FriendDetailView).
+    static func balance(
+        for friendID: UUID,
+        expenses: [Expense],
+        settlements: [Settlement],
+        currentUserID: UUID
+    ) -> Double {
+        netBalances(expenses: expenses, settlements: settlements, currentUserID: currentUserID)[friendID] ?? 0
     }
 
     static func totalOwedToYou(_ balances: [UUID: Double]) -> Double {

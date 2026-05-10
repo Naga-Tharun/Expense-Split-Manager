@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import PhotosUI
 
 struct EditExpenseView: View {
     @Environment(\.dismiss)      private var dismiss
@@ -13,24 +14,25 @@ struct EditExpenseView: View {
     @Query(sort: \User.name)  private var allUsers:  [User]
     @Query(sort: \Group.name) private var allGroups: [Group]
 
-    @AppStorage(CurrentUserManager.idKey) private var currentUserIDString: String = ""
-
     let expense: Expense
 
     // Basic fields — pre-filled from expense
     @State private var expenseDescription: String
     @State private var amountText:          String
-    @State private var category:            String
+    @State private var category:            ExpenseCategory
     @State private var date:                Date
     @State private var notes:               String
 
     // Split fields — pre-filled from expense
-    @State private var splitType:              String
+    @State private var splitType:              SplitType
     @State private var selectedGroupID:        UUID?
     @State private var selectedParticipantIDs: Set<UUID>
     @State private var selectedPayerID:        UUID?
     @State private var customAmounts:          [UUID: String]
     @State private var percentages:            [UUID: String]
+    @State private var selectedPhoto: PhotosPickerItem? = nil
+    @State private var receiptImageData: Data?
+    @State private var isLoadingImage = false
 
     init(expense: Expense) {
         self.expense = expense
@@ -43,6 +45,7 @@ struct EditExpenseView: View {
         _splitType          = State(initialValue: expense.splitType)
         _selectedGroupID    = State(initialValue: expense.group?.id)
         _selectedPayerID    = State(initialValue: expense.paidBy?.id)
+        _receiptImageData   = State(initialValue: expense.receiptImageData)
 
         let participantIDs = Set(
             (expense.participants ?? []).compactMap { $0.friend?.id }
@@ -64,20 +67,14 @@ struct EditExpenseView: View {
 
     // MARK: - Computed
 
-    private var currentUser: User? {
-        guard let uuid = UUID(uuidString: currentUserIDString) else { return nil }
-        return allUsers.first { $0.id == uuid }
-    }
+    private var currentUser: User? { CurrentUserManager.currentUser(from: allUsers) }
+    private var friends: [User] { CurrentUserManager.friends(from: allUsers) }
 
     private var amount: Double { Double(amountText) ?? 0 }
 
     private var selectedGroup: Group? {
         guard let id = selectedGroupID else { return nil }
         return allGroups.first { $0.id == id }
-    }
-
-    private var friends: [User] {
-        allUsers.filter { $0.id != currentUser?.id }
     }
 
     private var participantList: [User] {
@@ -105,8 +102,8 @@ struct EditExpenseView: View {
         !expenseDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && amount > 0
             && participantList.count >= 2
-            && (splitType != "custom"     || abs(customTotal - amount) < 0.01)
-            && (splitType != "percentage" || abs(percentageTotal - 100) < 0.01)
+            && (splitType != .custom     || abs(customTotal - amount) < 0.01)
+            && (splitType != .percentage || abs(percentageTotal - 100) < 0.01)
     }
 
     // MARK: - Body
@@ -143,6 +140,11 @@ struct EditExpenseView: View {
                     )
                 }
                 ExpenseFormSections.notesSection(notes: $notes)
+                ExpenseFormSections.receiptSection(
+                    selectedPhoto: $selectedPhoto,
+                    receiptImageData: $receiptImageData,
+                    isLoadingImage: $isLoadingImage
+                )
             }
             .navigationTitle("Edit Expense")
             .navigationBarTitleDisplayMode(.inline)
@@ -168,8 +170,15 @@ struct EditExpenseView: View {
         expense.date               = date
         expense.notes              = notes.isEmpty ? nil : notes
         expense.splitType          = splitType
+        expense.receiptImageData   = receiptImageData
 
-        expense.paidBy = selectedPayerID.flatMap { id in allUsers.first { $0.id == id } }
+        // Always set paidBy explicitly
+        if let payerID = selectedPayerID,
+           let payer = allUsers.first(where: { $0.id == payerID }) {
+            expense.paidBy = payer
+        } else {
+            expense.paidBy = currentUser
+        }
 
         let oldGroup = expense.group
         let newGroup = selectedGroupID.flatMap { id in allGroups.first { $0.id == id } }
@@ -191,14 +200,12 @@ struct EditExpenseView: View {
         let newParticipants: [ExpenseParticipant] = participantList.map { user in
             let ep = ExpenseParticipant(friend: user)
             switch splitType {
-            case "equal":
+            case .equal:
                 ep.amountOwed = equalShare
-            case "custom":
+            case .custom:
                 ep.amountOwed = Double(customAmounts[user.id] ?? "0") ?? 0
-            case "percentage":
+            case .percentage:
                 ep.amountOwed = amount * ((Double(percentages[user.id] ?? "0") ?? 0) / 100.0)
-            default:
-                ep.amountOwed = equalShare
             }
             return ep
         }
@@ -211,7 +218,7 @@ struct EditExpenseView: View {
 }
 
 #Preview {
-    let container = previewContainer()
+    let container = PreviewSampleData.container()
     let context   = container.mainContext
     let allUsers  = (try? context.fetch(FetchDescriptor<User>())) ?? []
     let me        = allUsers.first
@@ -219,7 +226,7 @@ struct EditExpenseView: View {
     let friend  = User(name: "Alex", profileColor: "#007AFF")
     context.insert(friend)
 
-    let expense = Expense(expenseDescription: "Team Lunch", amount: 1200, category: "food")
+    let expense = Expense(expenseDescription: "Team Lunch", amount: 1200, category: .food)
     let p1      = ExpenseParticipant(friend: me,     amountOwed: 600)
     let p2      = ExpenseParticipant(friend: friend, amountOwed: 600)
     context.insert(p1); context.insert(p2)

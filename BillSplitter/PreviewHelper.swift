@@ -29,18 +29,19 @@ func previewContainer() -> ModelContainer {
 
 // MARK: - Convenience modifier
 
-/// Wraps a view with the shared preview container.
+/// Wraps a view with the shared preview container + BalanceCache.
 struct PreviewContainerModifier: ViewModifier {
     let container: ModelContainer
     func body(content: Content) -> some View {
         content
             .modelContainer(container)
+            .environment(BalanceCache())
             .preferredColorScheme(.dark)
     }
 }
 
 extension View {
-    /// Apply in #Preview to get a fully-resolved current user.
+    /// Apply in #Preview to get a fully-resolved current user + balance cache.
     func withPreviewContainer() -> some View {
         modifier(PreviewContainerModifier(container: previewContainer()))
     }

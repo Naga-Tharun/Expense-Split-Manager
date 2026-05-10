@@ -7,11 +7,10 @@ import SwiftUI
 import SwiftData
 
 struct BalancesView: View {
+    @Environment(BalanceCache.self) private var cache
     @Query(sort: \User.name) private var allUsers:  [User]
     @Query private var expenses:                    [Expense]
     @Query private var settlements:                 [Settlement]
-
-    @AppStorage("currentUserID") private var currentUserIDString: String = ""
 
     @State private var showSettleUp   = false
     @State private var showHistory    = false
@@ -19,29 +18,11 @@ struct BalancesView: View {
     @State private var settleTo:     User?   = nil
     @State private var settleAmount: Double? = nil
 
-    private var currentUserID: UUID? { UUID(uuidString: currentUserIDString) }
+    private var currentUserID: UUID? { CurrentUserManager.currentUserID }
+    private var currentUser: User? { CurrentUserManager.currentUser(from: allUsers) }
 
-    private var currentUser: User? {
-        guard let uid = currentUserID else { return nil }
-        return allUsers.first { $0.id == uid }
-    }
-
-    private var balances: [UUID: Double] {
-        guard let uid = currentUserID else { return [:] }
-        return BalanceCalculator.netBalances(
-            expenses: expenses, settlements: settlements, currentUserID: uid
-        )
-    }
-
-    private var totalOwed:   Double { BalanceCalculator.totalOwedToYou(balances) }
-    private var totalYouOwe: Double { BalanceCalculator.totalYouOwe(balances) }
-    private var netBalance:  Double { totalOwed - totalYouOwe }
-
-    // Only show friends (exclude current user), sorted by abs balance
     private var friendsOnly: [User] {
-        allUsers
-            .filter { $0.id != currentUserID }
-            .sorted { abs(balances[$0.id] ?? 0) > abs(balances[$1.id] ?? 0) }
+        cache.sortedFriends(from: allUsers, currentUserID: currentUserID)
     }
 
     var body: some View {
@@ -52,13 +33,25 @@ struct BalancesView: View {
                 actionsSection
             }
             .navigationTitle("Balances")
+            .onAppear { refreshCache() }
             .sheet(isPresented: $showSettleUp) {
                 SettleUpView(from: settleFrom, to: settleTo, amount: settleAmount)
+            }
+            .onChange(of: showSettleUp) { _, showing in
+                if !showing { refreshCache() }
             }
             .sheet(isPresented: $showHistory) {
                 PaymentHistoryView()
             }
+            .onChange(of: showHistory) { _, showing in
+                if !showing { refreshCache() }
+            }
         }
+    }
+
+    private func refreshCache() {
+        guard let uid = currentUserID else { return }
+        cache.refresh(expenses: expenses, settlements: settlements, currentUserID: uid)
     }
 
     // MARK: - Summary Card
@@ -69,17 +62,17 @@ struct BalancesView: View {
                 VStack(spacing: 18) {
                     VStack(spacing: 4) {
                         Text("Net Balance").font(.subheadline).foregroundStyle(.secondary)
-                        Text("\(CurrencyHelper.symbol)\(abs(netBalance), specifier: "%.2f")")
+                        Text("\(CurrencyHelper.symbol)\(abs(cache.netBalance), specifier: "%.2f")")
                             .font(.system(size: 44, weight: .bold, design: .rounded))
                             .foregroundColor(netBalanceColor)
                         Text(netBalanceLabel).font(.caption)
-                            .foregroundColor(netBalance == 0 ? .green : .secondary)
+                            .foregroundColor(cache.netBalance == 0 ? .green : .secondary)
                     }
                     Divider()
                     HStack(spacing: 0) {
-                        summaryPill(title: "You owe",     value: totalYouOwe, color: totalYouOwe > 0.01 ? .red   : .secondary)
+                        summaryPill(title: "You owe",     value: cache.totalYouOwe, color: cache.totalYouOwe > 0.01 ? .red   : .secondary)
                         Divider().frame(width: 1, height: 40).padding(.horizontal, 16)
-                        summaryPill(title: "Owed to you", value: totalOwed,   color: totalOwed   > 0.01 ? .green : .secondary)
+                        summaryPill(title: "Owed to you", value: cache.totalOwedToYou, color: cache.totalOwedToYou > 0.01 ? .green : .secondary)
                     }
                 }
                 .frame(maxWidth: .infinity).padding(.vertical, 6)
@@ -89,15 +82,15 @@ struct BalancesView: View {
     }
 
     private var netBalanceColor: Color {
-        if netBalance > 0.01  { return .green }
-        if netBalance < -0.01 { return .red }
+        if cache.netBalance > 0.01  { return .green }
+        if cache.netBalance < -0.01 { return .red }
         return .primary
     }
 
     private var netBalanceLabel: String {
-        if netBalance > 0.01  { return "You are owed overall" }
-        if netBalance < -0.01 { return "You owe overall" }
-        return "All settled up ✓"
+        if cache.netBalance > 0.01  { return "You are owed overall" }
+        if cache.netBalance < -0.01 { return "You owe overall" }
+        return "All settled up"
     }
 
     @ViewBuilder
@@ -122,7 +115,7 @@ struct BalancesView: View {
                 .listRowBackground(Color.clear)
             } else {
                 ForEach(friendsOnly) { friend in
-                    friendRow(friend: friend, balance: balances[friend.id] ?? 0)
+                    friendRow(friend: friend, balance: cache.balance(for: friend.id))
                 }
             }
         }
@@ -151,7 +144,6 @@ struct BalancesView: View {
                     .font(.subheadline).fontWeight(.semibold)
                     .foregroundColor(abs(balance) < 0.01 ? .secondary : balance > 0 ? .green : .red)
 
-                // Show Settle only when I owe them
                 if balance < -0.01 {
                     Button("Settle") {
                         settleFrom   = currentUser
@@ -186,6 +178,7 @@ struct BalancesView: View {
 
 #Preview {
     BalancesView()
+        .environment(BalanceCache())
         .modelContainer(PreviewSampleData.container())
         .preferredColorScheme(.dark)
 }

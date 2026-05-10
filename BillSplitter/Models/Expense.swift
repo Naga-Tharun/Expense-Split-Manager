@@ -15,36 +15,48 @@ final class Expense {
     @Attribute(.unique) var id: UUID
     var expenseDescription: String
     var amount: Double
-    var category: String
+    @Attribute(originalName: "category") var categoryRaw: String
     var date: Date
     var notes: String?
     var receiptImageData: Data?
-    
+
     // Who paid
     var paidBy: User?
-    
+
     // Split details
-    var splitType: String // "equal", "custom", "percentage"
+    @Attribute(originalName: "splitType") var splitTypeRaw: String
     var participants: [ExpenseParticipant]?
-    
+
     // Relationships
     var group: Group?
-    
+
+    // MARK: - Type-safe accessors
+
+    var category: ExpenseCategory {
+        get { ExpenseCategory(rawValue: categoryRaw) ?? .general }
+        set { categoryRaw = newValue.rawValue }
+    }
+
+    var splitType: SplitType {
+        get { SplitType(rawValue: splitTypeRaw) ?? .equal }
+        set { splitTypeRaw = newValue.rawValue }
+    }
+
     init(
         id: UUID = UUID(),
         expenseDescription: String,
         amount: Double,
-        category: String = "general",
+        category: ExpenseCategory = .general,
         date: Date = Date(),
         notes: String? = nil,
-        splitType: String = "equal"
+        splitType: SplitType = .equal
     ) {
         self.id = id
         self.expenseDescription = expenseDescription
         self.amount = amount
-        self.category = category
+        self.categoryRaw = category.rawValue
         self.date = date
         self.notes = notes
-        self.splitType = splitType
+        self.splitTypeRaw = splitType.rawValue
     }
 }

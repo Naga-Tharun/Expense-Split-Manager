@@ -9,19 +9,21 @@ import SwiftData
 struct FriendDetailView: View {
     let friend: User
 
+    @Environment(BalanceCache.self) private var cache
     @Query private var allExpenses:  [Expense]
     @Query private var settlements:  [Settlement]
     @Query(sort: \User.name) private var allUsers: [User]
 
-    @AppStorage("currentUserID") private var currentUserIDString: String = ""
     @State private var showSettleUp = false
 
-    private var currentUserID: UUID? { UUID(uuidString: currentUserIDString) }
+    // Filter state
+    @State private var searchText      = ""
+    @State private var filterCategory: ExpenseCategory? = nil
+    @State private var sortOrder: ExpenseSortOption = .dateDesc
+    @State private var showFilters     = false
 
-    private var currentUser: User? {
-        guard let uid = currentUserID else { return nil }
-        return allUsers.first { $0.id == uid }
-    }
+    private var currentUserID: UUID? { CurrentUserManager.currentUserID }
+    private var currentUser: User? { CurrentUserManager.currentUser(from: allUsers) }
 
     private var sharedExpenses: [Expense] {
         allExpenses
@@ -29,11 +31,12 @@ struct FriendDetailView: View {
             .sorted { $0.date > $1.date }
     }
 
+    private var filteredSharedExpenses: [Expense] {
+        sharedExpenses.filtered(searchText: searchText, category: filterCategory, sortOrder: sortOrder)
+    }
+
     private var balance: Double {
-        guard let uid = currentUserID else { return 0 }
-        return BalanceCalculator.netBalances(
-            expenses: allExpenses, settlements: settlements, currentUserID: uid
-        )[friend.id] ?? 0
+        cache.balance(for: friend.id)
     }
 
     private var friendSettlements: [Settlement] {
@@ -45,11 +48,32 @@ struct FriendDetailView: View {
     var body: some View {
         List {
             headerSection
-            expensesSection
+
+            // Filter bar (collapsible)
+            if !sharedExpenses.isEmpty {
+                ExpenseFilterBar(
+                    filterCategory: $filterCategory,
+                    sortOrder: $sortOrder,
+                    isExpanded: $showFilters
+                )
+            }
+
+            // Expenses
+            FilteredExpensesList(
+                filtered: filteredSharedExpenses,
+                total: sharedExpenses.count,
+                headerTitle: "Shared Expenses",
+                emptyTitle: "No Shared Expenses",
+                emptyIcon: "cart",
+                emptyMessage: "No expenses shared with \(friend.name) yet"
+            )
+
             if !friendSettlements.isEmpty { settlementsSection }
         }
         .navigationTitle(friend.name)
         .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $searchText, prompt: "Search expenses…")
+        .onAppear { refreshCache() }
         .toolbar {
             if balance < -0.01 {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -61,6 +85,14 @@ struct FriendDetailView: View {
         .sheet(isPresented: $showSettleUp) {
             SettleUpView(from: currentUser, to: friend, amount: abs(balance))
         }
+        .onChange(of: showSettleUp) { _, showing in
+            if !showing { refreshCache() }
+        }
+    }
+
+    private func refreshCache() {
+        guard let uid = currentUserID else { return }
+        cache.refresh(expenses: allExpenses, settlements: settlements, currentUserID: uid)
     }
 
     // MARK: - Header
@@ -116,31 +148,13 @@ struct FriendDetailView: View {
         }
     }
 
-    // MARK: - Expenses
-
-    private var expensesSection: some View {
-        Section("Shared Expenses") {
-            if sharedExpenses.isEmpty {
-                Text("No shared expenses yet").foregroundStyle(.secondary).font(.subheadline)
-            } else {
-                ForEach(sharedExpenses) { expense in
-                    NavigationLink {
-                        ExpenseDetailView(expense: expense)
-                    } label: {
-                        ExpenseRow(expense: expense)
-                    }
-                }
-            }
-        }
-    }
-
     // MARK: - Settlements
 
     private var settlementsSection: some View {
         Section("Settlement History") {
             ForEach(friendSettlements) { s in
                 HStack(spacing: 10) {
-                    Image(systemName: "banknote.fill").font(.subheadline).foregroundColor(.green)
+                    Image(systemName: s.paymentMethod.icon).font(.subheadline).foregroundColor(.green)
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 4) {
                             Text(s.fromFriend?.id == currentUserID ? "You" : (s.fromFriend?.name ?? "?"))
@@ -163,8 +177,15 @@ struct FriendDetailView: View {
 }
 
 #Preview {
-    NavigationStack {
-        FriendDetailView(friend: User(name: "Alex", profileColor: "#007AFF"))
+    let container = PreviewSampleData.container()
+    let ctx       = container.mainContext
+    let users     = (try? ctx.fetch(FetchDescriptor<User>())) ?? []
+    let friend    = users.first { $0.name == "Alex" } ?? users.last!
+
+    return NavigationStack {
+        FriendDetailView(friend: friend)
     }
-    .withPreviewContainer()
+    .environment(BalanceCache())
+    .modelContainer(container)
+    .preferredColorScheme(.dark)
 }

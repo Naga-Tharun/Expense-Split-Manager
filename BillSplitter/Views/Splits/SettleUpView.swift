@@ -11,12 +11,11 @@ struct SettleUpView: View {
     @Environment(\.modelContext) private var modelContext
 
     @Query(sort: \User.name) private var allUsers: [User]
-    @AppStorage("currentUserID") private var currentUserIDString: String = ""
 
     @State private var selectedFromID: UUID? = nil
     @State private var selectedToID:   UUID? = nil
     @State private var amountText      = ""
-    @State private var paymentMethod   = "cash"
+    @State private var paymentMethod: PaymentMethod = .cash
     @State private var notes           = ""
     @State private var date            = Date()
 
@@ -30,15 +29,10 @@ struct SettleUpView: View {
         self.prefilledAmount = amount
     }
 
-    private var currentUser: User? {
-        guard let uuid = UUID(uuidString: currentUserIDString) else { return nil }
-        return allUsers.first { $0.id == uuid }
-    }
+    private var currentUser: User? { CurrentUserManager.currentUser(from: allUsers) }
 
     private var selectedFrom: User? { allUsers.first { $0.id == selectedFromID } }
     private var selectedTo:   User? { allUsers.first { $0.id == selectedToID } }
-
-    private let methods = ["cash", "upi", "bank transfer", "card", "other"]
 
     private var isValid: Bool {
         selectedFromID != nil && selectedToID != nil
@@ -119,8 +113,8 @@ struct SettleUpView: View {
         Section("Payment Details") {
             DatePicker("Date", selection: $date, displayedComponents: .date)
             Picker("Method", selection: $paymentMethod) {
-                ForEach(methods, id: \.self) { m in
-                    Label(m.capitalized, systemImage: methodIcon(m)).tag(m)
+                ForEach(PaymentMethod.allCases) { method in
+                    Label(method.label, systemImage: method.icon).tag(method)
                 }
             }
             TextField("Notes (optional)", text: $notes, axis: .vertical).lineLimit(2...4)
@@ -143,15 +137,6 @@ struct SettleUpView: View {
 
     private func displayName(_ user: User) -> String {
         user.id == currentUser?.id ? "\(user.name) (you)" : user.name
-    }
-
-    private func methodIcon(_ method: String) -> String {
-        switch method {
-        case "upi":           return "iphone.radiowaves.left.and.right"
-        case "bank transfer": return "building.columns.fill"
-        case "card":          return "creditcard.fill"
-        default:              return "banknote.fill"
-        }
     }
 
     private func applyPrefill() {
@@ -179,5 +164,6 @@ struct SettleUpView: View {
 
 #Preview {
     SettleUpView()
-        .withPreviewContainer()
+        .modelContainer(PreviewSampleData.container())
+        .preferredColorScheme(.dark)
 }

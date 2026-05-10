@@ -54,6 +54,26 @@ enum CurrentUserManager {
         return me
     }
 
+    // MARK: - Convenience accessors
+
+    /// The stored current-user UUID, if any.
+    static var currentUserID: UUID? {
+        guard let raw = UserDefaults.standard.string(forKey: idKey) else { return nil }
+        return UUID(uuidString: raw)
+    }
+
+    /// Returns the current User from the given user list.
+    static func currentUser(from allUsers: [User]) -> User? {
+        guard let uid = currentUserID else { return nil }
+        return allUsers.first { $0.id == uid }
+    }
+
+    /// Returns all users except the current user (i.e. the friend list).
+    static func friends(from allUsers: [User]) -> [User] {
+        guard let uid = currentUserID else { return allUsers }
+        return allUsers.filter { $0.id != uid }
+    }
+
     static func updateProfile(name: String, color: String, in context: ModelContext) {
         let allUsers = (try? context.fetch(FetchDescriptor<User>())) ?? []
         guard let raw = UserDefaults.standard.string(forKey: idKey),

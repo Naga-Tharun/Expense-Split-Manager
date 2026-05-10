@@ -51,7 +51,7 @@ struct PaymentHistoryView: View {
                 Circle()
                     .fill(Color.green.opacity(0.15))
                     .frame(width: 44, height: 44)
-                Image(systemName: methodIcon(s.paymentMethod))
+                Image(systemName: s.paymentMethod.icon)
                     .font(.system(size: 18))
                     .foregroundColor(Color.green)
             }
@@ -66,10 +66,8 @@ struct PaymentHistoryView: View {
 
                 HStack(spacing: 6) {
                     Text(s.date.formatted(date: .abbreviated, time: .omitted))
-                    if let method = s.paymentMethod {
-                        Text("·")
-                        Text(method.capitalized)
-                    }
+                    Text("·")
+                    Text(s.paymentMethod.label)
                 }
                 .font(.caption).foregroundStyle(.secondary)
 
@@ -85,15 +83,6 @@ struct PaymentHistoryView: View {
                 .foregroundColor(Color.green)
         }
         .padding(.vertical, 4)
-    }
-
-    private func methodIcon(_ method: String?) -> String {
-        switch method {
-        case "upi":           return "iphone.radiowaves.left.and.right"
-        case "bank transfer": return "building.columns.fill"
-        case "card":          return "creditcard.fill"
-        default:              return "banknote.fill"
-        }
     }
 }
 

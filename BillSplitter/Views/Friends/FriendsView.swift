@@ -8,26 +8,19 @@ import SwiftData
 
 struct FriendsView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(BalanceCache.self) private var cache
     @Query(sort: \User.name) private var allUsers:  [User]
     @Query private var expenses:                    [Expense]
     @Query private var settlements:                 [Settlement]
     @Query private var allParticipants:              [ExpenseParticipant]
 
-    @AppStorage("currentUserID") private var currentUserIDString: String = ""
     @State private var isPresentingAddFriend = false
     @State private var friendToDelete: User? = nil
 
-    private var currentUserID: UUID? { UUID(uuidString: currentUserIDString) }
+    private var currentUserID: UUID? { CurrentUserManager.currentUserID }
 
     private var friends: [User] {
-        allUsers.filter { $0.id != currentUserID }
-    }
-
-    private var balances: [UUID: Double] {
-        guard let uid = currentUserID else { return [:] }
-        return BalanceCalculator.netBalances(
-            expenses: expenses, settlements: settlements, currentUserID: uid
-        )
+        CurrentUserManager.friends(from: allUsers)
     }
 
     var body: some View {
@@ -41,6 +34,7 @@ struct FriendsView: View {
                         }
                     }
                 }
+                .onAppear { refreshCache() }
                 .sheet(isPresented: $isPresentingAddFriend) { AddFriendView() }
                 .alert("Delete Friend?", isPresented: Binding(
                     get: { friendToDelete != nil },
@@ -75,7 +69,7 @@ struct FriendsView: View {
                     NavigationLink {
                         FriendDetailView(friend: friend)
                     } label: {
-                        FriendRowView(friend: friend, balance: balances[friend.id] ?? 0)
+                        FriendRowView(friend: friend, balance: cache.balance(for: friend.id))
                     }
                 }
                 .onDelete { offsets in
@@ -87,30 +81,29 @@ struct FriendsView: View {
         }
     }
 
-    /// Safely delete a friend and clean up orphaned participants & settlements
+    private func refreshCache() {
+        guard let uid = currentUserID else { return }
+        cache.refresh(expenses: expenses, settlements: settlements, currentUserID: uid)
+    }
+
     private func deleteFriend(_ friend: User) {
-        // Remove orphaned ExpenseParticipant records that reference this friend
         let orphanedParticipants = allParticipants.filter { $0.friend?.id == friend.id }
         orphanedParticipants.forEach { modelContext.delete($0) }
 
-        // Remove settlements involving this friend
         let orphanedSettlements = settlements.filter {
             $0.fromFriend?.id == friend.id || $0.toFriend?.id == friend.id
         }
         orphanedSettlements.forEach { modelContext.delete($0) }
 
-        // Remove friend from all group memberships
-        for user in allUsers {
-            // Groups are accessed through the user's groups relationship
-        }
-
         modelContext.delete(friend)
         try? modelContext.save()
+        refreshCache()
     }
 }
 
 #Preview {
     FriendsView()
+        .environment(BalanceCache())
         .modelContainer(PreviewSampleData.container())
         .preferredColorScheme(.dark)
 }

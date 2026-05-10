@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import PhotosUI
 
 struct AddExpenseView: View {
     @Environment(\.dismiss)      private var dismiss
@@ -13,39 +14,34 @@ struct AddExpenseView: View {
     @Query(sort: \User.name)  private var allUsers:  [User]
     @Query(sort: \Group.name) private var allGroups: [Group]
 
-    @AppStorage(CurrentUserManager.idKey) private var currentUserIDString: String = ""
-
     @State private var expenseDescription       = ""
     @State private var amountText               = ""
-    @State private var category                 = "general"
+    @State private var category: ExpenseCategory = .general
     @State private var date                     = Date()
     @State private var notes                    = ""
-    @State private var splitType: String        = "equal"
+    @State private var splitType: SplitType     = .equal
     @State private var selectedGroupID: UUID?   = nil
     @State private var selectedParticipantIDs: Set<UUID> = []
     @State private var customAmounts:  [UUID: String]    = [:]
     @State private var percentages:    [UUID: String]    = [:]
     @State private var selectedPayerID: UUID?   = nil
+    @State private var selectedPhoto: PhotosPickerItem? = nil
+    @State private var receiptImageData: Data?  = nil
+    @State private var isLoadingImage           = false
 
     let preselectedGroup: Group?
     init(preselectedGroup: Group? = nil) { self.preselectedGroup = preselectedGroup }
 
     // MARK: - Computed
 
-    private var currentUser: User? {
-        guard let uuid = UUID(uuidString: currentUserIDString) else { return nil }
-        return allUsers.first { $0.id == uuid }
-    }
+    private var currentUser: User? { CurrentUserManager.currentUser(from: allUsers) }
+    private var friends: [User] { CurrentUserManager.friends(from: allUsers) }
 
     private var amount: Double { Double(amountText) ?? 0 }
 
     private var selectedGroup: Group? {
         guard let id = selectedGroupID else { return nil }
         return allGroups.first { $0.id == id }
-    }
-
-    private var friends: [User] {
-        allUsers.filter { $0.id != currentUser?.id }
     }
 
     private var participantList: [User] {
@@ -73,8 +69,8 @@ struct AddExpenseView: View {
         !expenseDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && amount > 0
             && participantList.count >= 2
-            && (splitType != "custom"     || abs(customTotal - amount) < 0.01)
-            && (splitType != "percentage" || abs(percentageTotal - 100) < 0.01)
+            && (splitType != .custom     || abs(customTotal - amount) < 0.01)
+            && (splitType != .percentage || abs(percentageTotal - 100) < 0.01)
     }
 
     // MARK: - Body
@@ -111,6 +107,11 @@ struct AddExpenseView: View {
                     )
                 }
                 ExpenseFormSections.notesSection(notes: $notes)
+                ExpenseFormSections.receiptSection(
+                    selectedPhoto: $selectedPhoto,
+                    receiptImageData: $receiptImageData,
+                    isLoadingImage: $isLoadingImage
+                )
             }
             .navigationTitle("Add Expense")
             .navigationBarTitleDisplayMode(.inline)
@@ -139,9 +140,14 @@ struct AddExpenseView: View {
             splitType: splitType
         )
 
+        expense.receiptImageData = receiptImageData
+
+        // Always set paidBy explicitly
         if let payerID = selectedPayerID,
            let payer = allUsers.first(where: { $0.id == payerID }) {
             expense.paidBy = payer
+        } else {
+            expense.paidBy = currentUser
         }
 
         if let group = selectedGroup {
@@ -164,10 +170,9 @@ struct AddExpenseView: View {
         participantList.map { user in
             let ep = ExpenseParticipant(friend: user)
             switch splitType {
-            case "equal":      ep.amountOwed = equalShare
-            case "custom":     ep.amountOwed = Double(customAmounts[user.id] ?? "0") ?? 0
-            case "percentage": ep.amountOwed = amount * ((Double(percentages[user.id] ?? "0") ?? 0) / 100.0)
-            default:           ep.amountOwed = equalShare
+            case .equal:      ep.amountOwed = equalShare
+            case .custom:     ep.amountOwed = Double(customAmounts[user.id] ?? "0") ?? 0
+            case .percentage: ep.amountOwed = amount * ((Double(percentages[user.id] ?? "0") ?? 0) / 100.0)
             }
             return ep
         }
@@ -176,5 +181,6 @@ struct AddExpenseView: View {
 
 #Preview {
     AddExpenseView()
-        .withPreviewContainer()
+        .modelContainer(PreviewSampleData.container())
+        .preferredColorScheme(.dark)
 }

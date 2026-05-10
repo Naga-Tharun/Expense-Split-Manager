@@ -59,7 +59,7 @@ enum PreviewSampleData {
 
         // 1. Equal split — Flatmates electricity
         let elec = Expense(expenseDescription: "Electricity Bill", amount: 3600,
-                           category: "utilities", date: daysAgo(2))
+                           category: .utilities, date: daysAgo(2))
         elec.paidBy = me; elec.group = flatmates
         let elecP = equalParticipants([me, alex, priya], amount: 3600, ctx: ctx)
         elec.participants = elecP
@@ -68,7 +68,7 @@ enum PreviewSampleData {
 
         // 2. Equal split — Dinner
         let dinner = Expense(expenseDescription: "Dinner at Spice Garden", amount: 2400,
-                             category: "food", date: daysAgo(5))
+                             category: .food, date: daysAgo(5))
         dinner.paidBy = alex; dinner.group = flatmates
         let dinnerP = equalParticipants([me, alex, priya], amount: 2400, ctx: ctx)
         dinner.participants = dinnerP
@@ -77,7 +77,7 @@ enum PreviewSampleData {
 
         // 3. Custom split — Groceries
         let grocery = Expense(expenseDescription: "Weekly Groceries", amount: 1800,
-                              category: "shopping", date: daysAgo(3), splitType: "custom")
+                              category: .shopping, date: daysAgo(3), splitType: .custom)
         grocery.paidBy = me; grocery.group = flatmates
         let gP1 = ExpenseParticipant(friend: me,    amountOwed: 800)
         let gP2 = ExpenseParticipant(friend: alex,  amountOwed: 500)
@@ -89,7 +89,7 @@ enum PreviewSampleData {
 
         // 4. Percentage split — Goa hotel
         let hotel = Expense(expenseDescription: "Beach Resort (3 nights)", amount: 18000,
-                            category: "accommodation", date: daysAgo(10), splitType: "percentage")
+                            category: .accommodation, date: daysAgo(10), splitType: .percentage)
         hotel.paidBy = jordan; hotel.group = tripGoa
         let hP1 = ExpenseParticipant(friend: me,     amountOwed: 5400)  // 30%
         let hP2 = ExpenseParticipant(friend: jordan,  amountOwed: 5400) // 30%
@@ -102,7 +102,7 @@ enum PreviewSampleData {
 
         // 5. Equal split — Cab to airport
         let cab = Expense(expenseDescription: "Cab to Airport", amount: 2800,
-                          category: "transport", date: daysAgo(9))
+                          category: .transport, date: daysAgo(9))
         cab.paidBy = me; cab.group = tripGoa
         let cabP = equalParticipants([me, jordan, sam, riya], amount: 2800, ctx: ctx)
         cab.participants = cabP
@@ -111,7 +111,7 @@ enum PreviewSampleData {
 
         // 6. Equal split — Office lunch
         let lunch = Expense(expenseDescription: "Biryani Friday", amount: 900,
-                            category: "food", date: daysAgo(1))
+                            category: .food, date: daysAgo(1))
         lunch.paidBy = jordan; lunch.group = officeLunch
         let lunchP = equalParticipants([me, alex, jordan], amount: 900, ctx: ctx)
         lunch.participants = lunchP
@@ -120,7 +120,7 @@ enum PreviewSampleData {
 
         // 7. No-group expense — Movie tickets
         let movie = Expense(expenseDescription: "Movie: Pushpa 3", amount: 600,
-                            category: "entertainment", date: daysAgo(4))
+                            category: .entertainment, date: daysAgo(4))
         movie.paidBy = me
         let mP1 = ExpenseParticipant(friend: me,   amountOwed: 200)
         let mP2 = ExpenseParticipant(friend: sam,  amountOwed: 200)
@@ -131,7 +131,7 @@ enum PreviewSampleData {
 
         // 8. Travel expense
         let flight = Expense(expenseDescription: "Flight Tickets Goa", amount: 12000,
-                             category: "travel", date: daysAgo(14))
+                             category: .travel, date: daysAgo(14))
         flight.paidBy = me; flight.group = tripGoa
         let fP = equalParticipants([me, jordan, sam, riya], amount: 12000, ctx: ctx)
         flight.participants = fP
@@ -140,13 +140,13 @@ enum PreviewSampleData {
 
         // ── Settlements ──
         let s1 = Settlement(fromFriend: alex, toFriend: me, amount: 800,
-                            date: daysAgo(1), paymentMethod: "upi",
+                            date: daysAgo(1), paymentMethod: .upi,
                             notes: "Electricity share", isConfirmed: true)
         let s2 = Settlement(fromFriend: priya, toFriend: me, amount: 500,
-                            date: daysAgo(1), paymentMethod: "cash",
+                            date: daysAgo(1), paymentMethod: .cash,
                             notes: "Groceries", isConfirmed: true)
         let s3 = Settlement(fromFriend: me, toFriend: jordan, amount: 3000,
-                            date: daysAgo(7), paymentMethod: "bank transfer",
+                            date: daysAgo(7), paymentMethod: .bankTransfer,
                             notes: "Hotel partial", isConfirmed: true)
         [s1, s2, s3].forEach { ctx.insert($0) }
 

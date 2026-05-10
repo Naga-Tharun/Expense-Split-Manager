@@ -3,30 +3,12 @@
 //  BillSplitter
 //
 //  Shared form sections extracted from AddExpenseView & EditExpenseView
-//  to eliminate ~300 lines of duplicated code.
+//  to eliminate duplicated code.
 //
 
 import SwiftUI
 import SwiftData
-
-// MARK: - Shared Category Data
-
-enum ExpenseCategories {
-    static let all: [(id: String, icon: String, label: String)] = [
-        ("general",       "square.grid.2x2.fill", "General"),
-        ("food",          "fork.knife",            "Food"),
-        ("transport",     "car.fill",              "Transport"),
-        ("accommodation", "house.fill",            "Stay"),
-        ("entertainment", "theatermasks.fill",     "Fun"),
-        ("shopping",      "cart.fill",             "Shopping"),
-        ("utilities",     "bolt.fill",             "Utilities"),
-        ("travel",        "airplane",              "Travel"),
-    ]
-
-    static func icon(for category: String) -> String {
-        all.first { $0.id == category }?.icon ?? "square.grid.2x2.fill"
-    }
-}
+import PhotosUI
 
 // MARK: - Shared Form Sections
 
@@ -61,7 +43,7 @@ struct ExpenseFormSections {
     static func detailsSection(
         description: Binding<String>,
         date: Binding<Date>,
-        category: Binding<String>
+        category: Binding<ExpenseCategory>
     ) -> some View {
         Section("Details") {
             TextField("What's this for?", text: description)
@@ -69,20 +51,20 @@ struct ExpenseFormSections {
             DatePicker("Date", selection: date, displayedComponents: .date)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
-                    ForEach(ExpenseCategories.all, id: \.id) { cat in
-                        Button { category.wrappedValue = cat.id } label: {
+                    ForEach(ExpenseCategory.allCases) { cat in
+                        Button { category.wrappedValue = cat } label: {
                             VStack(spacing: 4) {
                                 Image(systemName: cat.icon).font(.title3)
                                 Text(cat.label).font(.caption2)
                             }
                             .frame(width: 64, height: 56)
                             .background(RoundedRectangle(cornerRadius: 12)
-                                .fill(category.wrappedValue == cat.id
+                                .fill(category.wrappedValue == cat
                                       ? Color.cyan.opacity(0.18)
                                       : Color(.secondarySystemBackground)))
-                            .foregroundColor(category.wrappedValue == cat.id ? .cyan : .secondary)
+                            .foregroundColor(category.wrappedValue == cat ? .cyan : .secondary)
                             .overlay(RoundedRectangle(cornerRadius: 12)
-                                .stroke(category.wrappedValue == cat.id ? Color.cyan : .clear, lineWidth: 1.5))
+                                .stroke(category.wrappedValue == cat ? Color.cyan : .clear, lineWidth: 1.5))
                         }
                         .buttonStyle(.plain)
                     }
@@ -182,7 +164,7 @@ struct ExpenseFormSections {
 
     @ViewBuilder
     static func splitTypeSection(
-        splitType: Binding<String>,
+        splitType: Binding<SplitType>,
         participantList: [User],
         currentUser: User?,
         amount: Double,
@@ -194,14 +176,14 @@ struct ExpenseFormSections {
     ) -> some View {
         Section("Split Type") {
             Picker("How to split", selection: splitType) {
-                Text("Equal").tag("equal")
-                Text("Custom \(CurrencyHelper.symbol)").tag("custom")
-                Text("By %").tag("percentage")
+                ForEach(SplitType.allCases) { type in
+                    Text(type.label).tag(type)
+                }
             }
             .pickerStyle(.segmented)
 
             switch splitType.wrappedValue {
-            case "equal":
+            case .equal:
                 ForEach(participantList) { p in
                     HStack {
                         avatarView(p)
@@ -212,7 +194,7 @@ struct ExpenseFormSections {
                     }
                 }
 
-            case "custom":
+            case .custom:
                 ForEach(participantList) { p in
                     HStack(spacing: 8) {
                         avatarView(p)
@@ -234,7 +216,7 @@ struct ExpenseFormSections {
                         .foregroundColor(abs(customTotal - amount) < 0.01 ? .green : .red)
                 }
 
-            case "percentage":
+            case .percentage:
                 ForEach(participantList) { p in
                     HStack(spacing: 8) {
                         avatarView(p)
@@ -255,9 +237,6 @@ struct ExpenseFormSections {
                         .font(.caption)
                         .foregroundColor(abs(percentageTotal - 100) < 0.01 ? .green : .red)
                 }
-
-            default:
-                EmptyView()
             }
         }
     }
@@ -268,6 +247,91 @@ struct ExpenseFormSections {
     static func notesSection(notes: Binding<String>) -> some View {
         Section("Notes (optional)") {
             TextField("Add a note…", text: notes, axis: .vertical).lineLimit(3...6)
+        }
+    }
+
+    // MARK: - Receipt Section
+
+    @ViewBuilder
+    static func receiptSection(
+        selectedPhoto: Binding<PhotosPickerItem?>,
+        receiptImageData: Binding<Data?>,
+        isLoadingImage: Binding<Bool>
+    ) -> some View {
+        Section("Receipt (optional)") {
+            if let data = receiptImageData.wrappedValue,
+               let uiImage = UIImage(data: data) {
+                VStack(spacing: 10) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: 200)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                        )
+
+                    HStack(spacing: 16) {
+                        PhotosPicker(selection: selectedPhoto, matching: .images) {
+                            Label("Replace", systemImage: "arrow.triangle.2.circlepath.camera")
+                                .font(.subheadline)
+                        }
+                        .buttonStyle(.bordered).tint(.cyan)
+
+                        Button(role: .destructive) {
+                            receiptImageData.wrappedValue = nil
+                            selectedPhoto.wrappedValue = nil
+                        } label: {
+                            Label("Remove", systemImage: "trash")
+                                .font(.subheadline)
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+                .listRowBackground(Color.clear)
+            } else if isLoadingImage.wrappedValue {
+                HStack {
+                    Spacer()
+                    ProgressView("Loading image…")
+                    Spacer()
+                }
+                .padding(.vertical, 10)
+            } else {
+                PhotosPicker(selection: selectedPhoto, matching: .images) {
+                    Label("Attach Receipt Photo", systemImage: "camera.fill")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .buttonStyle(.bordered).tint(.cyan)
+                .padding(.vertical, 4)
+            }
+        }
+        .onChange(of: selectedPhoto.wrappedValue) { _, newItem in
+            guard let newItem else { return }
+            isLoadingImage.wrappedValue = true
+            Task {
+                if let data = try? await newItem.loadTransferable(type: Data.self) {
+                    // Compress to JPEG to save storage
+                    if let uiImage = UIImage(data: data),
+                       let jpeg = uiImage.jpegData(compressionQuality: 0.7) {
+                        await MainActor.run {
+                            receiptImageData.wrappedValue = jpeg
+                            isLoadingImage.wrappedValue = false
+                        }
+                    } else {
+                        await MainActor.run {
+                            receiptImageData.wrappedValue = data
+                            isLoadingImage.wrappedValue = false
+                        }
+                    }
+                } else {
+                    await MainActor.run {
+                        isLoadingImage.wrappedValue = false
+                    }
+                }
+            }
         }
     }
 

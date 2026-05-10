@@ -16,21 +16,24 @@ struct FriendRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             ZStack {
                 Circle()
                     .fill(Color(hex: friend.profileColor).opacity(0.2))
-                    .frame(width: 50, height: 50)
+                    .frame(width: 44, height: 44)
                 Text(String(friend.name.prefix(1)))
-                    .font(.title2).fontWeight(.semibold)
+                    .font(.headline).fontWeight(.semibold)
                     .foregroundColor(Color(hex: friend.profileColor))
             }
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(friend.name).font(.headline)
+                Text(friend.name)
+                    .font(.body)
+                    .fontWeight(.medium)
 
                 if abs(balance) < 0.01 {
-                    Text("settled up").font(.caption).foregroundColor(Color.green)
+                    Label("Settled up", systemImage: "checkmark.circle.fill")
+                        .font(.caption).foregroundColor(.green)
                 } else {
                     Text(balance > 0 ? "owes you" : "you owe")
                         .font(.caption).foregroundStyle(.secondary)
@@ -42,13 +45,11 @@ struct FriendRowView: View {
             if abs(balance) > 0.01 {
                 Text("\(CurrencyHelper.symbol)\(abs(balance), specifier: "%.2f")")
                     .font(.subheadline).fontWeight(.semibold)
-                    .foregroundColor(balance > 0 ? Color.green : Color.red)
-            } else {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(Color.green.opacity(0.6))
+                    .monospacedDigit()
+                    .foregroundColor(balance > 0 ? .green : .red)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 2)
     }
 }
 

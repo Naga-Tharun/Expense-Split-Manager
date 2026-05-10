@@ -16,25 +16,60 @@ struct GroupDetailView: View {
     @State private var showAddExpense = false
     @State private var showSettleUp   = false
 
-    /// Reads directly from UserDefaults — guaranteed set by BillSplitterApp.init()
-    private var currentUser: User? {
-        guard let raw  = UserDefaults.standard.string(forKey: "currentUserID"),
-              let uuid = UUID(uuidString: raw) else { return nil }
-        return allUsers.first { $0.id == uuid }
-    }
+    // Filter state
+    @State private var searchText      = ""
+    @State private var filterCategory: ExpenseCategory? = nil
+    @State private var sortOrder: ExpenseSortOption = .dateDesc
+    @State private var showFilters     = false
 
-    private var members: [User]    { group.members ?? [] }
+    private var currentUser: User? { CurrentUserManager.currentUser(from: allUsers) }
+
+    private var members: [User]         { group.members ?? [] }
     private var groupExpenses: [Expense] { (group.expenses ?? []).sorted { $0.date > $1.date } }
     private var totalExpenses: Double    { groupExpenses.reduce(0) { $0 + $1.amount } }
+
+    private var filteredExpenses: [Expense] {
+        groupExpenses.filtered(searchText: searchText, category: filterCategory, sortOrder: sortOrder)
+    }
 
     var body: some View {
         List {
             statsRow
             membersSection
-            expensesSection
+
+            // Filter bar (collapsible)
+            if !groupExpenses.isEmpty {
+                ExpenseFilterBar(
+                    filterCategory: $filterCategory,
+                    sortOrder: $sortOrder,
+                    isExpanded: $showFilters
+                )
+            }
+
+            // Expenses
+            FilteredExpensesList(
+                filtered: filteredExpenses,
+                total: groupExpenses.count,
+                headerTitle: "Expenses",
+                emptyTitle: "No Expenses Yet",
+                emptyIcon: "cart.badge.plus",
+                emptyMessage: "Add an expense to start tracking"
+            ) { offsets in
+                let toDelete = offsets.map { filteredExpenses[$0] }
+                toDelete.forEach { modelContext.delete($0) }
+                try? modelContext.save()
+            }
+
+            // Add expense button
+            Section {
+                Button { showAddExpense = true } label: {
+                    Label("Add Expense", systemImage: "plus.circle.fill").foregroundStyle(.cyan)
+                }
+            }
         }
         .navigationTitle(group.name)
         .navigationBarTitleDisplayMode(.large)
+        .searchable(text: $searchText, prompt: "Search expenses…")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
@@ -58,7 +93,6 @@ struct GroupDetailView: View {
         .sheet(isPresented: $showSettleUp)   { SettleUpView() }
     }
 
-    /// Silently inserts current user as first member if they aren't already in the group.
     private func ensureCurrentUserIsMember() {
         guard let me = currentUser else { return }
         guard !members.contains(where: { $0.id == me.id }) else { return }
@@ -71,9 +105,9 @@ struct GroupDetailView: View {
     private var statsRow: some View {
         Section {
             HStack(spacing: 8) {
-                statCard(title: "Members",  value: "\(members.count)",       icon: "person.2.fill",               color: .cyan)
-                statCard(title: "Expenses", value: "\(groupExpenses.count)", icon: "list.bullet.rectangle",       color: .orange)
-                statCard(title: "Total",    value: "\(CurrencyHelper.symbol)\(Int(totalExpenses))", icon: "indianrupeesign.circle.fill", color: .green)
+                statCard(title: "Members",  value: "\(members.count)",       icon: "person.2.fill",         color: .cyan)
+                statCard(title: "Expenses", value: "\(groupExpenses.count)", icon: "list.bullet.rectangle", color: .orange)
+                statCard(title: "Total",    value: "\(CurrencyHelper.symbol)\(Int(totalExpenses))", icon: "banknote.fill", color: .green)
             }
         }
         .listRowInsets(.init(top: 8, leading: 12, bottom: 8, trailing: 12))
@@ -125,39 +159,6 @@ struct GroupDetailView: View {
 
             Button { showAddMember = true } label: {
                 Label("Add Member", systemImage: "person.badge.plus").foregroundStyle(.cyan)
-            }
-        }
-    }
-
-    // MARK: - Expenses
-
-    private var expensesSection: some View {
-        Section {
-            if groupExpenses.isEmpty {
-                Text("No expenses yet").foregroundStyle(.secondary).font(.subheadline)
-            } else {
-                ForEach(groupExpenses) { expense in
-                    NavigationLink {
-                        ExpenseDetailView(expense: expense)
-                    } label: {
-                        ExpenseRow(expense: expense)
-                    }
-                }
-                .onDelete { offsets in
-                    offsets.map { groupExpenses[$0] }.forEach { modelContext.delete($0) }
-                    try? modelContext.save()
-                }
-            }
-            Button { showAddExpense = true } label: {
-                Label("Add Expense", systemImage: "plus.circle.fill").foregroundStyle(.cyan)
-            }
-        } header: {
-            HStack {
-                Text("Expenses")
-                Spacer()
-                if !groupExpenses.isEmpty {
-                    Text("\(CurrencyHelper.symbol)\(totalExpenses, specifier: "%.2f") total").font(.caption).foregroundStyle(.secondary)
-                }
             }
         }
     }

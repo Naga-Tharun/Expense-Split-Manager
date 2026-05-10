@@ -15,7 +15,6 @@ struct ProfileView: View {
     @Query private var settlements:                     [Settlement]
     @Query private var expenseParticipants:              [ExpenseParticipant]
 
-    @AppStorage("currentUserID") private var currentUserIDString: String = ""
     @AppStorage("currency")      private var currency: String            = "INR"
 
     @State private var isEditingName  = false
@@ -23,14 +22,11 @@ struct ProfileView: View {
     @State private var draftColorHex  = "#00BCD4"
     @State private var showClearAlert = false
 
-    private var currentUser: User? {
-        guard let uuid = UUID(uuidString: currentUserIDString) else { return nil }
-        return allUsers.first { $0.id == uuid }
-    }
+    private var currentUser: User? { CurrentUserManager.currentUser(from: allUsers) }
 
     private var displayName:  String { currentUser?.name         ?? "You" }
     private var displayColor: String { currentUser?.profileColor ?? "#00BCD4" }
-    private var friendCount:  Int    { allUsers.filter { $0.id != currentUser?.id }.count }
+    private var friendCount:  Int    { CurrentUserManager.friends(from: allUsers).count }
     private var totalSplit:   Double { expenses.reduce(0) { $0 + $1.amount } }
 
     private let colorOptions = [
@@ -152,13 +148,7 @@ struct ProfileView: View {
             statRow("Groups",      value: "\(groups.count)",     icon: "person.3.fill",         color: .orange)
             statRow("Expenses",    value: "\(expenses.count)",   icon: "list.bullet",           color: .blue)
             statRow("Settlements", value: "\(settlements.count)",icon: "checkmark.circle.fill", color: .green)
-            HStack {
-                Label { Text("Total Split") } icon: {
-                    Image(systemName: "indianrupeesign.circle.fill").foregroundColor(.purple)
-                }
-                Spacer()
-                Text("\(CurrencyHelper.symbol)\(totalSplit, specifier: "%.2f")").foregroundStyle(.secondary).fontWeight(.semibold)
-            }
+            statRow("Total Split", value: "\(CurrencyHelper.symbol)\(String(format: "%.2f", totalSplit))", icon: "banknote.fill", color: .purple)
         }
     }
 

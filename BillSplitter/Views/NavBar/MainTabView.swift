@@ -16,7 +16,7 @@ struct MainTabView: View {
             FriendsView()
                 .tabItem { Label("Friends",   systemImage: "person.2.fill") }.tag(1)
             AddSplitView()
-                .tabItem { Label("Add Split", systemImage: "plus.circle.fill") }.tag(2)
+                .tabItem { Label("Activity", systemImage: "bolt.fill") }.tag(2)
             BalancesView()
                 .tabItem { Label("Balances",  systemImage: "chart.bar.fill") }.tag(3)
             ProfileView()
@@ -28,6 +28,7 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
+        .environment(BalanceCache())
         .modelContainer(PreviewSampleData.container())
         .preferredColorScheme(.dark)
 }

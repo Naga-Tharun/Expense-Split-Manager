@@ -17,17 +17,24 @@ final class Settlement {
     var toFriend: User?
     var amount: Double
     var date: Date
-    var paymentMethod: String?
+    @Attribute(originalName: "paymentMethod") var paymentMethodRaw: String?
     var notes: String?
     var isConfirmed: Bool
-    
+
+    // MARK: - Type-safe accessor
+
+    var paymentMethod: PaymentMethod {
+        get { PaymentMethod(rawValue: paymentMethodRaw ?? "") ?? .cash }
+        set { paymentMethodRaw = newValue.rawValue }
+    }
+
     init(
         id: UUID = UUID(),
         fromFriend: User? = nil,
         toFriend: User? = nil,
         amount: Double = 0.0,
         date: Date = Date(),
-        paymentMethod: String? = nil,
+        paymentMethod: PaymentMethod = .cash,
         notes: String? = nil,
         isConfirmed: Bool = false
     ) {
@@ -36,9 +43,8 @@ final class Settlement {
         self.toFriend = toFriend
         self.amount = amount
         self.date = date
-        self.paymentMethod = paymentMethod
+        self.paymentMethodRaw = paymentMethod.rawValue
         self.notes = notes
         self.isConfirmed = isConfirmed
     }
 }
-
