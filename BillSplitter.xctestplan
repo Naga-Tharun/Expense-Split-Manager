@@ -1,0 +1,30 @@
+{
+  "configurations" : [
+    {
+      "id" : "639949CB-1EF0-49E4-A40E-B758DC8B60AD",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:BillSplitter.xcodeproj",
+      "identifier" : "FACD8CB72ED312A300348BAA",
+      "name" : "BillSplitter"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:BillSplitter.xcodeproj",
+        "identifier" : "FA1F8CC42FB1B71200040575",
+        "name" : "BillSplitterTests"
+      }
+    }
+  ],
+  "version" : 1
+}
