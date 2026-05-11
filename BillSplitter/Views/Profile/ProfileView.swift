@@ -86,20 +86,33 @@ struct ProfileView: View {
         .listRowBackground(Color.clear)
     }
 
+    private var nameIsEmpty: Bool {
+        draftName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     private var editModeContent: some View {
         VStack(spacing: 12) {
-            TextField("Your name", text: $draftName)
-                .multilineTextAlignment(.center).font(.title3).fontWeight(.semibold)
-                .textInputAutocapitalization(.words).onSubmit { saveProfile() }
-                .padding(.horizontal, 16).padding(.vertical, 8)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color(.secondarySystemBackground)))
-                .padding(.horizontal, 30)
+            VStack(spacing: 4) {
+                TextField("Your name", text: $draftName)
+                    .multilineTextAlignment(.center).font(.title3).fontWeight(.semibold)
+                    .textInputAutocapitalization(.words).onSubmit { saveProfile() }
+                    .padding(.horizontal, 16).padding(.vertical, 8)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color(.secondarySystemBackground)))
+                    .padding(.horizontal, 30)
+
+                if nameIsEmpty {
+                    FormErrorMessage(message: "Name cannot be empty", isVisible: true)
+                }
+            }
 
             colorDotsView(binding: $draftColorHex, size: 28, applyImmediately: false)
 
             HStack(spacing: 20) {
                 Button("Cancel") { cancelEdit() }.foregroundStyle(.secondary)
-                Button("Save")   { saveProfile() }.fontWeight(.semibold).foregroundStyle(.cyan)
+                Button("Save")   { saveProfile() }
+                    .fontWeight(.semibold)
+                    .foregroundStyle(nameIsEmpty ? Color.secondary : Color.cyan)
+                    .disabled(nameIsEmpty)
             }
             .font(.subheadline)
         }

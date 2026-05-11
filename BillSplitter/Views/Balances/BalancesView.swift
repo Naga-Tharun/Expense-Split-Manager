@@ -29,27 +29,42 @@ struct BalancesView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                summaryCard
-                individualBalances
-                actionsSection
+            if !cache.isLoaded {
+                ProgressView("Calculating balances…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onAppear { refreshCache() }
+            } else {
+                balancesList
             }
-            .navigationTitle("Balances")
-            .onAppear { refreshCache() }
-            .sheet(isPresented: $showSettleUp) {
-                SettleUpView(from: settleFrom, to: settleTo, amount: settleAmount)
-            }
-            .onChange(of: showSettleUp) { _, showing in
-                if !showing { refreshCache() }
-            }
-            .sheet(isPresented: $showHistory) {
-                PaymentHistoryView()
-            }
-            .onChange(of: showHistory) { _, showing in
-                if !showing { refreshCache() }
-            }
-            .celebrationOverlay(isPresented: showCelebration)
         }
+    }
+
+    private var balancesList: some View {
+        List {
+            summaryCard
+            individualBalances
+            actionsSection
+        }
+        .refreshable {
+            refreshCache()
+            try? await Task.sleep(for: .milliseconds(300))
+            Haptics.light()
+        }
+        .navigationTitle("Balances")
+        .onAppear { refreshCache() }
+        .sheet(isPresented: $showSettleUp) {
+            SettleUpView(from: settleFrom, to: settleTo, amount: settleAmount)
+        }
+        .onChange(of: showSettleUp) { _, showing in
+            if !showing { refreshCache() }
+        }
+        .sheet(isPresented: $showHistory) {
+            PaymentHistoryView()
+        }
+        .onChange(of: showHistory) { _, showing in
+            if !showing { refreshCache() }
+        }
+        .celebrationOverlay(isPresented: showCelebration)
     }
 
     private func refreshCache() {

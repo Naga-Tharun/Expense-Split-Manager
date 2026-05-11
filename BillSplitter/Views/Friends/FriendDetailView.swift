@@ -63,6 +63,11 @@ struct FriendDetailView: View {
 
             if !friendSettlements.isEmpty { settlementsSection }
         }
+        .refreshable {
+            refreshCache()
+            try? await Task.sleep(for: .milliseconds(300))
+            Haptics.light()
+        }
         .navigationTitle(friend.name)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { refreshCache() }

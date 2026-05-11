@@ -6,11 +6,27 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		FA1F8CC92FB1B71200040575 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FACD8CB02ED312A300348BAA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FACD8CB72ED312A300348BAA;
+			remoteInfo = BillSplitter;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		FA1F8CC52FB1B71200040575 /* BillSplitterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BillSplitterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FACD8CB82ED312A300348BAA /* BillSplitter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BillSplitter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		FA1F8CC62FB1B71200040575 /* BillSplitterTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = BillSplitterTests;
+			sourceTree = "<group>";
+		};
 		FACD8CBA2ED312A300348BAA /* BillSplitter */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = BillSplitter;
@@ -19,6 +35,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		FA1F8CC22FB1B71200040575 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FACD8CB52ED312A300348BAA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -33,6 +56,7 @@
 			isa = PBXGroup;
 			children = (
 				FACD8CBA2ED312A300348BAA /* BillSplitter */,
+				FA1F8CC62FB1B71200040575 /* BillSplitterTests */,
 				FACD8CB92ED312A300348BAA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				FACD8CB82ED312A300348BAA /* BillSplitter.app */,
+				FA1F8CC52FB1B71200040575 /* BillSplitterTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,6 +73,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		FA1F8CC42FB1B71200040575 /* BillSplitterTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FA1F8CCB2FB1B71200040575 /* Build configuration list for PBXNativeTarget "BillSplitterTests" */;
+			buildPhases = (
+				FA1F8CC12FB1B71200040575 /* Sources */,
+				FA1F8CC22FB1B71200040575 /* Frameworks */,
+				FA1F8CC32FB1B71200040575 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FA1F8CCA2FB1B71200040575 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FA1F8CC62FB1B71200040575 /* BillSplitterTests */,
+			);
+			name = BillSplitterTests;
+			packageProductDependencies = (
+			);
+			productName = BillSplitterTests;
+			productReference = FA1F8CC52FB1B71200040575 /* BillSplitterTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		FACD8CB72ED312A300348BAA /* BillSplitter */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = FACD8CC52ED312A500348BAA /* Build configuration list for PBXNativeTarget "BillSplitter" */;
@@ -77,9 +125,13 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2610;
+				LastSwiftUpdateCheck = 2640;
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
+					FA1F8CC42FB1B71200040575 = {
+						CreatedOnToolsVersion = 26.4.1;
+						TestTargetID = FACD8CB72ED312A300348BAA;
+					};
 					FACD8CB72ED312A300348BAA = {
 						CreatedOnToolsVersion = 26.1.1;
 					};
@@ -100,11 +152,19 @@
 			projectRoot = "";
 			targets = (
 				FACD8CB72ED312A300348BAA /* BillSplitter */,
+				FA1F8CC42FB1B71200040575 /* BillSplitterTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		FA1F8CC32FB1B71200040575 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FACD8CB62ED312A300348BAA /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -115,6 +175,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		FA1F8CC12FB1B71200040575 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FACD8CB42ED312A300348BAA /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -124,7 +191,59 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		FA1F8CCA2FB1B71200040575 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FACD8CB72ED312A300348BAA /* BillSplitter */;
+			targetProxy = FA1F8CC92FB1B71200040575 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		FA1F8CCC2FB1B71200040575 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = TMWRANMUCB;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = project.ios.BillSplitterTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BillSplitter.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BillSplitter";
+			};
+			name = Debug;
+		};
+		FA1F8CCD2FB1B71200040575 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = TMWRANMUCB;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = project.ios.BillSplitterTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BillSplitter.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BillSplitter";
+			};
+			name = Release;
+		};
 		FACD8CC32ED312A500348BAA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -315,6 +434,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		FA1F8CCB2FB1B71200040575 /* Build configuration list for PBXNativeTarget "BillSplitterTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FA1F8CCC2FB1B71200040575 /* Debug */,
+				FA1F8CCD2FB1B71200040575 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		FACD8CB32ED312A300348BAA /* Build configuration list for PBXProject "BillSplitter" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

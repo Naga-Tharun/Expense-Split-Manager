@@ -20,7 +20,10 @@ struct ExpenseFormSections {
     // MARK: - Amount Section
 
     @ViewBuilder
-    static func amountSection(amountText: Binding<String>) -> some View {
+    static func amountSection(
+        amountText: Binding<String>,
+        editedFields: Binding<Set<String>>
+    ) -> some View {
         Section {
             VStack(spacing: 6) {
                 Text("Amount").font(.subheadline).foregroundStyle(.secondary)
@@ -32,6 +35,13 @@ struct ExpenseFormSections {
                         .keyboardType(.decimalPad)
                         .font(.system(size: 52, weight: .bold, design: .rounded))
                         .multilineTextAlignment(.center)
+                        .onChange(of: amountText.wrappedValue) { _, _ in
+                            editedFields.wrappedValue.insert("amount")
+                        }
+                }
+                if let error = ExpenseFormLogic.amountError(amountText.wrappedValue),
+                   editedFields.wrappedValue.contains("amount") {
+                    FormErrorMessage(message: error, isVisible: true)
                 }
             }
             .frame(maxWidth: .infinity).padding(.vertical, 10)
@@ -44,11 +54,23 @@ struct ExpenseFormSections {
     static func detailsSection(
         description: Binding<String>,
         date: Binding<Date>,
-        category: Binding<ExpenseCategory>
+        category: Binding<ExpenseCategory>,
+        editedFields: Binding<Set<String>>
     ) -> some View {
         Section("Details") {
-            TextField("What's this for?", text: description)
-                .textInputAutocapitalization(.sentences)
+            VStack(alignment: .leading, spacing: 4) {
+                TextField("What's this for?", text: description)
+                    .textInputAutocapitalization(.sentences)
+                    .onChange(of: description.wrappedValue) { _, _ in
+                        editedFields.wrappedValue.insert("description")
+                    }
+                if let error = ExpenseFormLogic.descriptionError(
+                    description.wrappedValue,
+                    fieldTouched: editedFields.wrappedValue.contains("description")
+                ) {
+                    FormErrorMessage(message: error, isVisible: true)
+                }
+            }
             DatePicker("Date", selection: date, displayedComponents: .date)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -86,7 +108,9 @@ struct ExpenseFormSections {
         selectedGroup: Group?,
         currentUser: User?,
         friends: [User],
-        selectedParticipantIDs: Binding<Set<UUID>>
+        selectedParticipantIDs: Binding<Set<UUID>>,
+        participantCount: Int = 0,
+        formStarted: Bool = false
     ) -> some View {
         Section("Split With") {
             Picker("Group", selection: selectedGroupID) {
@@ -127,6 +151,12 @@ struct ExpenseFormSections {
                         }
                         .buttonStyle(.plain)
                     }
+                }
+
+                if let error = ExpenseFormLogic.participantError(
+                    count: participantCount, formStarted: formStarted
+                ) {
+                    FormErrorMessage(message: error, isVisible: true)
                 }
             } else {
                 let members = selectedGroup?.members ?? []
@@ -218,6 +248,11 @@ struct ExpenseFormSections {
                         .font(.caption)
                         .foregroundColor(abs(customTotal - amount) < 0.01 ? .green : .red)
                 }
+                if let error = ExpenseFormLogic.customSplitError(
+                    customTotal: customTotal, expenseAmount: amount
+                ) {
+                    FormErrorMessage(message: error, isVisible: true)
+                }
 
             case .percentage:
                 ForEach(participantList) { p in
@@ -239,6 +274,11 @@ struct ExpenseFormSections {
                     Text("\(percentageTotal, specifier: "%.1f")% / 100%")
                         .font(.caption)
                         .foregroundColor(abs(percentageTotal - 100) < 0.01 ? .green : .red)
+                }
+                if let error = ExpenseFormLogic.percentageSplitError(
+                    percentageTotal: percentageTotal
+                ) {
+                    FormErrorMessage(message: error, isVisible: true)
                 }
             }
         }

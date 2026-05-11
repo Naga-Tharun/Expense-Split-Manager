@@ -11,7 +11,8 @@ struct AddGroupView: View {
     @Environment(\.dismiss)      private var dismiss
     @Environment(\.modelContext) private var modelContext
 
-    @Query(sort: \User.name) private var allUsers: [User]
+    @Query(sort: \User.name)  private var allUsers:  [User]
+    @Query(sort: \Group.name) private var allGroups: [Group]
 
     @State private var name             = ""
     @State private var selectedColorHex = "#007AFF"
@@ -22,6 +23,7 @@ struct AddGroupView: View {
     @State private var saveError        = SaveErrorState()
     @State private var showSuccess      = false
     @State private var selectedMemberIDs: Set<UUID> = []
+    @State private var nameTouched      = false
 
     private let colorOptions   = ["#007AFF", "#FF9500", "#34C759", "#FF3B30", "#5856D6", "#FF2D55"]
     private let availableIcons = [
@@ -32,6 +34,15 @@ struct AddGroupView: View {
 
     private var currentUser: User? { CurrentUserManager.currentUser(from: allUsers) }
     private var friends: [User] { CurrentUserManager.friends(from: allUsers) }
+
+    private var nameError: String? {
+        guard nameTouched else { return nil }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return "Group name is required" }
+        let existing = allGroups.map { $0.name.lowercased() }
+        if existing.contains(trimmed.lowercased()) { return "A group with this name already exists" }
+        return nil
+    }
 
     var body: some View {
         NavigationStack {
@@ -56,8 +67,14 @@ struct AddGroupView: View {
                 .listRowBackground(Color.clear)
 
                 Section("Group Details") {
-                    TextField("Group Name", text: $name)
-                        .textInputAutocapitalization(.words).autocorrectionDisabled()
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("Group Name", text: $name)
+                            .textInputAutocapitalization(.words).autocorrectionDisabled()
+                            .onChange(of: name) { _, _ in nameTouched = true }
+                        if let error = nameError {
+                            FormErrorMessage(message: error, isVisible: true)
+                        }
+                    }
                     TextField("Description (optional)", text: $description)
                         .autocorrectionDisabled()
                 }
@@ -125,7 +142,7 @@ struct AddGroupView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") { createGroup() }
                         .fontWeight(.semibold)
-                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || nameError != nil)
                 }
             }
             .sheet(isPresented: $showIconPicker) {

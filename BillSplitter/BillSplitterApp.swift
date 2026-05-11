@@ -27,13 +27,14 @@ struct BillSplitterApp: App {
 
     init() {
         logger.info("BillSplitter launching")
-        let schema = Schema([
-            User.self, Group.self, Expense.self,
-            ExpenseParticipant.self, Settlement.self,
-        ])
+        let schema = Schema(SchemaV1.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
-        if let container = try? ModelContainer(for: schema, configurations: [config]) {
+        if let container = try? ModelContainer(
+            for: schema,
+            migrationPlan: BillSplitterMigrationPlan.self,
+            configurations: [config]
+        ) {
             sharedModelContainer = container
         } else {
             // Schema change — delete the old store and retry as last resort
@@ -44,7 +45,11 @@ struct BillSplitterApp: App {
             related.forEach { try? FileManager.default.removeItem(at: $0) }
             logger.warning("Schema migration failed — store reset to fresh state")
 
-            guard let freshContainer = try? ModelContainer(for: schema, configurations: [config]) else {
+            guard let freshContainer = try? ModelContainer(
+                for: schema,
+                migrationPlan: BillSplitterMigrationPlan.self,
+                configurations: [config]
+            ) else {
                 fatalError("Could not create ModelContainer even after reset")
             }
             sharedModelContainer = freshContainer

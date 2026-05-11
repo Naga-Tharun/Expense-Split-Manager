@@ -14,10 +14,7 @@ import SwiftData
 /// BillSplitterApp.init() does in the real app.
 @MainActor
 func previewContainer() -> ModelContainer {
-    let schema = Schema([
-        User.self, Group.self, Expense.self,
-        ExpenseParticipant.self, Settlement.self,
-    ])
+    let schema = Schema(SchemaV1.models)
     let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: schema, configurations: [config])
 

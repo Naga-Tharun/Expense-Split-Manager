@@ -11,6 +11,7 @@ import XCTest
 import SwiftData
 @testable import BillSplitter
 
+@MainActor
 final class BalanceCalculatorTests: XCTestCase {
 
     // MARK: - Helpers
@@ -24,7 +25,7 @@ final class BalanceCalculatorTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        let schema = Schema([User.self, Group.self, Expense.self, ExpenseParticipant.self, Settlement.self])
+        let schema = Schema(SchemaV1.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         container = try! ModelContainer(for: schema, configurations: [config])
         context = container.mainContext
@@ -85,7 +86,7 @@ final class BalanceCalculatorTests: XCTestCase {
         let balances = BalanceCalculator.netBalances(expenses: expenses, settlements: [], currentUserID: me.id)
 
         // Alice owes me $50
-        XCTAssertEqual(balances[alice.id], 50, accuracy: 0.01)
+        XCTAssertEqual(balances[alice.id] ?? 0, 50, accuracy: 0.01)
         // My own entry should not appear
         XCTAssertNil(balances[me.id])
     }
@@ -98,7 +99,7 @@ final class BalanceCalculatorTests: XCTestCase {
         let balances = BalanceCalculator.netBalances(expenses: expenses, settlements: [], currentUserID: me.id)
 
         // I owe Alice $50 (negative)
-        XCTAssertEqual(balances[alice.id], -50, accuracy: 0.01)
+        XCTAssertEqual(balances[alice.id] ?? 0, -50, accuracy: 0.01)
     }
 
     func testIPaidThreeWaySplit() {
@@ -108,8 +109,8 @@ final class BalanceCalculatorTests: XCTestCase {
 
         let balances = BalanceCalculator.netBalances(expenses: expenses, settlements: [], currentUserID: me.id)
 
-        XCTAssertEqual(balances[alice.id], 100, accuracy: 0.01)
-        XCTAssertEqual(balances[bob.id],   100, accuracy: 0.01)
+        XCTAssertEqual(balances[alice.id] ?? 0, 100, accuracy: 0.01)
+        XCTAssertEqual(balances[bob.id] ?? 0,   100, accuracy: 0.01)
     }
 
     // MARK: - Tests: Custom Split
@@ -121,7 +122,7 @@ final class BalanceCalculatorTests: XCTestCase {
 
         let balances = BalanceCalculator.netBalances(expenses: expenses, settlements: [], currentUserID: me.id)
 
-        XCTAssertEqual(balances[alice.id], 70, accuracy: 0.01)
+        XCTAssertEqual(balances[alice.id] ?? 0, 70, accuracy: 0.01)
     }
 
     // MARK: - Tests: Multiple Expenses
@@ -136,7 +137,7 @@ final class BalanceCalculatorTests: XCTestCase {
         let balances = BalanceCalculator.netBalances(expenses: expenses, settlements: [], currentUserID: me.id)
 
         // Net: Alice owes me $30 - $20 = $10
-        XCTAssertEqual(balances[alice.id], 10, accuracy: 0.01)
+        XCTAssertEqual(balances[alice.id] ?? 0, 10, accuracy: 0.01)
     }
 
     // MARK: - Tests: Settlements
@@ -153,7 +154,7 @@ final class BalanceCalculatorTests: XCTestCase {
         let balances = BalanceCalculator.netBalances(expenses: expenses, settlements: settlements, currentUserID: me.id)
 
         // Alice still owes me $40
-        XCTAssertEqual(balances[alice.id], 40, accuracy: 0.01)
+        XCTAssertEqual(balances[alice.id] ?? 0, 40, accuracy: 0.01)
     }
 
     func testSettlementIPay() {
@@ -168,7 +169,7 @@ final class BalanceCalculatorTests: XCTestCase {
         let balances = BalanceCalculator.netBalances(expenses: expenses, settlements: settlements, currentUserID: me.id)
 
         // I still owe Alice $30
-        XCTAssertEqual(balances[alice.id], -30, accuracy: 0.01)
+        XCTAssertEqual(balances[alice.id] ?? 0, -30, accuracy: 0.01)
     }
 
     func testUnconfirmedSettlementIgnored() {
@@ -181,7 +182,7 @@ final class BalanceCalculatorTests: XCTestCase {
         let balances = BalanceCalculator.netBalances(expenses: expenses, settlements: settlements, currentUserID: me.id)
 
         // Unconfirmed settlement should not reduce debt
-        XCTAssertEqual(balances[alice.id], 100, accuracy: 0.01)
+        XCTAssertEqual(balances[alice.id] ?? 0, 100, accuracy: 0.01)
     }
 
     func testFullSettlement() {

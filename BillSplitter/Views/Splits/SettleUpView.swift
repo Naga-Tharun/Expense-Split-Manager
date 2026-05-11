@@ -22,6 +22,7 @@ struct SettleUpView: View {
     @State private var date            = Date()
     @State private var saveError       = SaveErrorState()
     @State private var showSuccess     = false
+    @State private var editedFields: Set<String> = []
 
     let prefilledFrom:   User?
     let prefilledTo:     User?
@@ -42,6 +43,19 @@ struct SettleUpView: View {
         selectedFromID != nil && selectedToID != nil
             && selectedFromID != selectedToID
             && (Double(amountText) ?? 0) > 0
+    }
+
+    // MARK: - Inline validation helpers
+
+    private var amountError: String? {
+        guard editedFields.contains("amount") else { return nil }
+        return ExpenseFormLogic.amountError(amountText)
+    }
+
+    private var directionError: String? {
+        guard selectedFromID != nil, selectedToID != nil,
+              selectedFromID == selectedToID else { return nil }
+        return "Payer and receiver must be different people"
     }
 
     var body: some View {
@@ -84,6 +98,12 @@ struct SettleUpView: View {
                         .keyboardType(.decimalPad)
                         .font(.system(size: 48, weight: .bold, design: .rounded))
                         .multilineTextAlignment(.center)
+                        .onChange(of: amountText) { _, _ in
+                            editedFields.insert("amount")
+                        }
+                }
+                if let error = amountError {
+                    FormErrorMessage(message: error, isVisible: true)
                 }
             }
             .frame(maxWidth: .infinity).padding(.vertical, 10)
@@ -116,6 +136,10 @@ struct SettleUpView: View {
                 ForEach(allUsers) { user in
                     Text(displayName(user)).tag(Optional(user.id))
                 }
+            }
+
+            if let error = directionError {
+                FormErrorMessage(message: error, isVisible: true)
             }
         }
     }

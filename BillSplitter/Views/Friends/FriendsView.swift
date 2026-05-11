@@ -60,7 +60,10 @@ struct FriendsView: View {
 
     @ViewBuilder
     private var friendsContent: some View {
-        if friends.isEmpty {
+        if !cache.isLoaded {
+            ProgressView("Loading balances…")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if friends.isEmpty {
             ContentUnavailableView(
                 "No Friends Added",
                 systemImage: "person.2.fill",
@@ -80,6 +83,11 @@ struct FriendsView: View {
                         friendToDelete = friends[idx]
                     }
                 }
+            }
+            .refreshable {
+                refreshCache()
+                try? await Task.sleep(for: .milliseconds(300))
+                Haptics.light()
             }
         }
     }

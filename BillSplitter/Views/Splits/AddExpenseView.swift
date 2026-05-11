@@ -32,6 +32,7 @@ struct AddExpenseView: View {
     @State private var isLoadingImage           = false
     @State private var saveError                = SaveErrorState()
     @State private var showSuccess              = false
+    @State private var editedFields: Set<String> = []
 
     let preselectedGroup: Group?
     init(preselectedGroup: Group? = nil) { self.preselectedGroup = preselectedGroup }
@@ -74,15 +75,17 @@ struct AddExpenseView: View {
     var body: some View {
         NavigationStack {
             Form {
-                ExpenseFormSections.amountSection(amountText: $amountText)
-                ExpenseFormSections.detailsSection(description: $expenseDescription, date: $date, category: $category)
+                ExpenseFormSections.amountSection(amountText: $amountText, editedFields: $editedFields)
+                ExpenseFormSections.detailsSection(description: $expenseDescription, date: $date, category: $category, editedFields: $editedFields)
                 ExpenseFormSections.splitWithSection(
                     selectedGroupID: $selectedGroupID,
                     allGroups: allGroups,
                     selectedGroup: selectedGroup,
                     currentUser: currentUser,
                     friends: friends,
-                    selectedParticipantIDs: $selectedParticipantIDs
+                    selectedParticipantIDs: $selectedParticipantIDs,
+                    participantCount: participantList.count,
+                    formStarted: !editedFields.isEmpty
                 )
                 ExpenseFormSections.paidBySection(
                     selectedPayerID: $selectedPayerID,

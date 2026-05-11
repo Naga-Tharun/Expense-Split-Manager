@@ -70,6 +70,10 @@ struct GroupDetailView: View {
                 }
             }
         }
+        .refreshable {
+            try? await Task.sleep(for: .milliseconds(400))
+            Haptics.light()
+        }
         .navigationTitle(group.name)
         .navigationBarTitleDisplayMode(.large)
         .toolbar {

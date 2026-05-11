@@ -5,23 +5,41 @@ import UIKit
 struct AddFriendView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    
+
+    @Query(sort: \User.name) private var allUsers: [User]
+
     @State private var name: String = ""
     @State private var selectedColorHex: String = "#007AFF"
     @State private var selectedColor: Color = Color(hex: "#007AFF")
     @State private var saveError = SaveErrorState()
     @State private var showSuccess = false
+    @State private var nameTouched = false
     
     // Simple palette of colors to choose from
     private let colorOptions: [String] = ["#007AFF", "#FF9500", "#34C759", "#FF3B30", "#5856D6", "#FF2D55"]
+
+    private var nameError: String? {
+        guard nameTouched else { return nil }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return "Name is required" }
+        let existing = allUsers.map { $0.name.lowercased() }
+        if existing.contains(trimmed.lowercased()) { return "A friend with this name already exists" }
+        return nil
+    }
     
     var body: some View {
         NavigationStack {
             Form {
                 Section("Friend Details") {
-                    TextField("Name", text: $name)
-                        .textInputAutocapitalization(.words)
-                        .autocorrectionDisabled()
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("Name", text: $name)
+                            .textInputAutocapitalization(.words)
+                            .autocorrectionDisabled()
+                            .onChange(of: name) { _, _ in nameTouched = true }
+                        if let error = nameError {
+                            FormErrorMessage(message: error, isVisible: true)
+                        }
+                    }
                     
                     // Color picker grid
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -70,7 +88,7 @@ struct AddFriendView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") { addFriend() }
-                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || nameError != nil)
                 }
             }
             .saveErrorAlert($saveError)

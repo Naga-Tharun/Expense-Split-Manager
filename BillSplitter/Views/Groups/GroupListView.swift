@@ -23,6 +23,10 @@ struct GroupListView: View {
             }
             .onDelete(perform: onDelete)
         }
+        .refreshable {
+            try? await Task.sleep(for: .milliseconds(400))
+            Haptics.light()
+        }
     }
 }
 

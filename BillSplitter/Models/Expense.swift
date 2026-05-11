@@ -8,54 +8,61 @@
 import SwiftData
 import Foundation
 
-// Expense Model
-@Model
-final class Expense {
-    @Attribute(.unique) var id: UUID
-    var expenseDescription: String
-    var amount: Double
-    @Attribute(originalName: "category") var categoryRaw: String
-    var date: Date
-    var notes: String?
-    @Attribute(.externalStorage) var receiptImageData: Data?
+// MARK: - Nested inside SchemaV1 for VersionedSchema support
 
-    // Who paid
-    var paidBy: User?
+extension SchemaV1 {
 
-    // Split details
-    @Attribute(originalName: "splitType") var splitTypeRaw: String
-    var participants: [ExpenseParticipant]?
+    @Model
+    final class Expense {
+        @Attribute(.unique) var id: UUID
+        var expenseDescription: String
+        var amount: Double
+        @Attribute(originalName: "category") var categoryRaw: String
+        var date: Date
+        var notes: String?
+        @Attribute(.externalStorage) var receiptImageData: Data?
 
-    // Relationships
-    var group: Group?
+        // Who paid
+        var paidBy: User?
 
-    // MARK: - Type-safe accessors
+        // Split details
+        @Attribute(originalName: "splitType") var splitTypeRaw: String
+        var participants: [ExpenseParticipant]?
 
-    var category: ExpenseCategory {
-        get { ExpenseCategory(rawValue: categoryRaw) ?? .general }
-        set { categoryRaw = newValue.rawValue }
-    }
+        // Relationships
+        var group: Group?
 
-    var splitType: SplitType {
-        get { SplitType(rawValue: splitTypeRaw) ?? .equal }
-        set { splitTypeRaw = newValue.rawValue }
-    }
+        // MARK: - Type-safe accessors
 
-    init(
-        id: UUID = UUID(),
-        expenseDescription: String,
-        amount: Double,
-        category: ExpenseCategory = .general,
-        date: Date = Date(),
-        notes: String? = nil,
-        splitType: SplitType = .equal
-    ) {
-        self.id = id
-        self.expenseDescription = expenseDescription
-        self.amount = amount
-        self.categoryRaw = category.rawValue
-        self.date = date
-        self.notes = notes
-        self.splitTypeRaw = splitType.rawValue
+        var category: ExpenseCategory {
+            get { ExpenseCategory(rawValue: categoryRaw) ?? .general }
+            set { categoryRaw = newValue.rawValue }
+        }
+
+        var splitType: SplitType {
+            get { SplitType(rawValue: splitTypeRaw) ?? .equal }
+            set { splitTypeRaw = newValue.rawValue }
+        }
+
+        init(
+            id: UUID = UUID(),
+            expenseDescription: String,
+            amount: Double,
+            category: ExpenseCategory = .general,
+            date: Date = Date(),
+            notes: String? = nil,
+            splitType: SplitType = .equal
+        ) {
+            self.id = id
+            self.expenseDescription = expenseDescription
+            self.amount = amount
+            self.categoryRaw = category.rawValue
+            self.date = date
+            self.notes = notes
+            self.splitTypeRaw = splitType.rawValue
+        }
     }
 }
+
+// Top-level alias so the rest of the app keeps using `Expense` unchanged.
+typealias Expense = SchemaV1.Expense

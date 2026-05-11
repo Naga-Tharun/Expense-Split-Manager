@@ -64,6 +64,10 @@ struct PaymentHistoryView: View {
                     pendingDelete = offsets
                 }
             }
+            .refreshable {
+                try? await Task.sleep(for: .milliseconds(400))
+                Haptics.light()
+            }
         }
     }
 

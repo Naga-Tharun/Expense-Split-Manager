@@ -65,6 +65,12 @@ struct AddSplitView: View {
                     }
                 }
             }
+            .refreshable {
+                // SwiftData @Query auto-updates, but the gesture
+                // gives tactile confirmation that data is current.
+                try? await Task.sleep(for: .milliseconds(400))
+                Haptics.light()
+            }
             .navigationTitle("Activity")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

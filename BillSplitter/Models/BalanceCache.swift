@@ -25,6 +25,8 @@ final class BalanceCache {
     private(set) var balances: [UUID: Double] = [:]
     private(set) var totalOwedToYou: Double = 0
     private(set) var totalYouOwe: Double = 0
+    private(set) var isLoaded: Bool = false
+    private(set) var lastRefreshed: Date? = nil
     var netBalance: Double { totalOwedToYou - totalYouOwe }
 
     // MARK: - Refresh
@@ -42,6 +44,8 @@ final class BalanceCache {
         )
         totalOwedToYou = BalanceCalculator.totalOwedToYou(balances)
         totalYouOwe    = BalanceCalculator.totalYouOwe(balances)
+        isLoaded       = true
+        lastRefreshed  = Date()
         logger.info("Balances refreshed: \(self.balances.count) friends, net=\(self.netBalance, format: .fixed(precision: 2)), owed=\(self.totalOwedToYou, format: .fixed(precision: 2)), owe=\(self.totalYouOwe, format: .fixed(precision: 2))")
     }
 
