@@ -37,6 +37,8 @@ struct EditExpenseView: View {
     @State private var saveError      = SaveErrorState()
     @State private var showSuccess    = false
     @State private var editedFields: Set<String> = []
+    @State private var excludedGroupMemberIDs: Set<UUID> = []
+    @State private var participantSearchText   = ""
 
     init(expense: Expense) {
         self.expense = expense
@@ -65,6 +67,13 @@ struct EditExpenseView: View {
                 percents[uid] = String(format: "%.1f", p.amountOwed / expense.amount * 100)
             }
         }
+        // Pre-compute excluded group members (members in group but not in expense participants)
+        if let group = expense.group {
+            let allMemberIDs = Set((group.members ?? []).map(\.id))
+            let excluded = allMemberIDs.subtracting(participantIDs)
+            _excludedGroupMemberIDs = State(initialValue: excluded)
+        }
+
         _customAmounts = State(initialValue: amounts)
         _percentages   = State(initialValue: percents)
     }
@@ -83,7 +92,8 @@ struct EditExpenseView: View {
     private var participantList: [User] {
         ExpenseFormLogic.participantList(
             selectedGroup: selectedGroup, friends: friends,
-            selectedParticipantIDs: selectedParticipantIDs, currentUser: currentUser
+            selectedParticipantIDs: selectedParticipantIDs, currentUser: currentUser,
+            excludedGroupMemberIDs: excludedGroupMemberIDs
         )
     }
 
@@ -116,6 +126,8 @@ struct EditExpenseView: View {
                     currentUser: currentUser,
                     friends: friends,
                     selectedParticipantIDs: $selectedParticipantIDs,
+                    excludedGroupMemberIDs: $excludedGroupMemberIDs,
+                    participantSearchText: $participantSearchText,
                     participantCount: participantList.count,
                     formStarted: !editedFields.isEmpty
                 )

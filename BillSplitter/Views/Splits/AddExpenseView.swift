@@ -33,6 +33,8 @@ struct AddExpenseView: View {
     @State private var saveError                = SaveErrorState()
     @State private var showSuccess              = false
     @State private var editedFields: Set<String> = []
+    @State private var excludedGroupMemberIDs: Set<UUID> = []
+    @State private var participantSearchText   = ""
 
     let preselectedGroup: Group?
     init(preselectedGroup: Group? = nil) { self.preselectedGroup = preselectedGroup }
@@ -51,7 +53,8 @@ struct AddExpenseView: View {
     private var participantList: [User] {
         ExpenseFormLogic.participantList(
             selectedGroup: selectedGroup, friends: friends,
-            selectedParticipantIDs: selectedParticipantIDs, currentUser: currentUser
+            selectedParticipantIDs: selectedParticipantIDs, currentUser: currentUser,
+            excludedGroupMemberIDs: excludedGroupMemberIDs
         )
     }
 
@@ -84,6 +87,8 @@ struct AddExpenseView: View {
                     currentUser: currentUser,
                     friends: friends,
                     selectedParticipantIDs: $selectedParticipantIDs,
+                    excludedGroupMemberIDs: $excludedGroupMemberIDs,
+                    participantSearchText: $participantSearchText,
                     participantCount: participantList.count,
                     formStarted: !editedFields.isEmpty
                 )

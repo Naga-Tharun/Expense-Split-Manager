@@ -421,6 +421,141 @@ final class ExpenseFormLogicTests: XCTestCase {
         XCTAssertEqual(result[0].name, "Alice")
     }
 
+    // MARK: participantList — excludedGroupMemberIDs
+
+    func testParticipantListWithGroupExcludingOneMember() {
+        let me = makeUser("Me")
+        let alice = makeUser("Alice")
+        let bob = makeUser("Bob")
+        let group = Group(name: "Flatmates", iconName: "house.fill")
+        group.members = [me, alice, bob]
+        context.insert(group)
+
+        let result = ExpenseFormLogic.participantList(
+            selectedGroup: group,
+            friends: [],
+            selectedParticipantIDs: [],
+            currentUser: me,
+            excludedGroupMemberIDs: [bob.id]
+        )
+        XCTAssertEqual(result.count, 2)
+        XCTAssertTrue(result.contains(where: { $0.id == me.id }))
+        XCTAssertTrue(result.contains(where: { $0.id == alice.id }))
+        XCTAssertFalse(result.contains(where: { $0.id == bob.id }))
+    }
+
+    func testParticipantListWithGroupExcludingAllMembers() {
+        let me = makeUser("Me")
+        let alice = makeUser("Alice")
+        let group = Group(name: "Duo", iconName: "person.2")
+        group.members = [me, alice]
+        context.insert(group)
+
+        let result = ExpenseFormLogic.participantList(
+            selectedGroup: group,
+            friends: [],
+            selectedParticipantIDs: [],
+            currentUser: me,
+            excludedGroupMemberIDs: [me.id, alice.id]
+        )
+        XCTAssertEqual(result.count, 0)
+    }
+
+    func testParticipantListWithGroupEmptyExclusionReturnsAll() {
+        let me = makeUser("Me")
+        let alice = makeUser("Alice")
+        let bob = makeUser("Bob")
+        let group = Group(name: "Team", iconName: "person.3")
+        group.members = [me, alice, bob]
+        context.insert(group)
+
+        let result = ExpenseFormLogic.participantList(
+            selectedGroup: group,
+            friends: [],
+            selectedParticipantIDs: [],
+            currentUser: me,
+            excludedGroupMemberIDs: []
+        )
+        XCTAssertEqual(result.count, 3)
+    }
+
+    func testParticipantListFriendExclusionIgnoredInManualMode() {
+        let me = makeUser("Me")
+        let alice = makeUser("Alice")
+        let bob = makeUser("Bob")
+
+        // bob.id in excludedGroupMemberIDs should NOT remove Bob in manual mode —
+        // friends are controlled by selectedParticipantIDs, not the exclusion set.
+        let result = ExpenseFormLogic.participantList(
+            selectedGroup: nil,
+            friends: [alice, bob],
+            selectedParticipantIDs: [alice.id, bob.id],
+            currentUser: me,
+            excludedGroupMemberIDs: [bob.id]
+        )
+        // Manual mode: Me + Alice + Bob (friend exclusion not affected)
+        XCTAssertEqual(result.count, 3)
+        XCTAssertTrue(result.contains(where: { $0.id == bob.id }))
+    }
+
+    func testParticipantListExcludeCurrentUserInManualMode() {
+        let me = makeUser("Me")
+        let alice = makeUser("Alice")
+        let bob = makeUser("Bob")
+
+        // Excluding current user — e.g. "I paid but I'm not splitting"
+        let result = ExpenseFormLogic.participantList(
+            selectedGroup: nil,
+            friends: [alice, bob],
+            selectedParticipantIDs: [alice.id, bob.id],
+            currentUser: me,
+            excludedGroupMemberIDs: [me.id]
+        )
+        // Only Alice + Bob — Me is excluded
+        XCTAssertEqual(result.count, 2)
+        XCTAssertFalse(result.contains(where: { $0.id == me.id }))
+        XCTAssertTrue(result.contains(where: { $0.id == alice.id }))
+        XCTAssertTrue(result.contains(where: { $0.id == bob.id }))
+    }
+
+    func testParticipantListExcludeCurrentUserInGroupMode() {
+        let me = makeUser("Me")
+        let alice = makeUser("Alice")
+        let bob = makeUser("Bob")
+        let group = Group(name: "Team", iconName: "person.3")
+        group.members = [me, alice, bob]
+        context.insert(group)
+
+        let result = ExpenseFormLogic.participantList(
+            selectedGroup: group,
+            friends: [],
+            selectedParticipantIDs: [],
+            currentUser: me,
+            excludedGroupMemberIDs: [me.id]
+        )
+        // Alice + Bob — Me excluded from group split
+        XCTAssertEqual(result.count, 2)
+        XCTAssertFalse(result.contains(where: { $0.id == me.id }))
+    }
+
+    func testParticipantListExcludeNonExistentIDNoEffect() {
+        let me = makeUser("Me")
+        let alice = makeUser("Alice")
+        let group = Group(name: "Pair", iconName: "person.2")
+        group.members = [me, alice]
+        context.insert(group)
+
+        let bogusID = UUID()
+        let result = ExpenseFormLogic.participantList(
+            selectedGroup: group,
+            friends: [],
+            selectedParticipantIDs: [],
+            currentUser: me,
+            excludedGroupMemberIDs: [bogusID]
+        )
+        XCTAssertEqual(result.count, 2, "Excluding a non-member ID should have no effect")
+    }
+
     // ================================================================
     // MARK: - buildParticipants
     // ================================================================

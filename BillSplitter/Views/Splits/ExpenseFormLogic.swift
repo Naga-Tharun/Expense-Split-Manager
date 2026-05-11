@@ -14,15 +14,22 @@ enum ExpenseFormLogic {
     // MARK: - Participant List
 
     /// Builds the effective participant list based on group vs. manual selection.
+    /// When a group is selected, `excludedGroupMemberIDs` allows individual
+    /// members to be unchecked from that expense without leaving the group.
     static func participantList(
         selectedGroup: Group?,
         friends: [User],
         selectedParticipantIDs: Set<UUID>,
-        currentUser: User?
+        currentUser: User?,
+        excludedGroupMemberIDs: Set<UUID> = []
     ) -> [User] {
-        if let g = selectedGroup { return g.members ?? [] }
+        if let g = selectedGroup {
+            return (g.members ?? []).filter { !excludedGroupMemberIDs.contains($0.id) }
+        }
         var list = friends.filter { selectedParticipantIDs.contains($0.id) }
-        if let me = currentUser { list.insert(me, at: 0) }
+        if let me = currentUser, !excludedGroupMemberIDs.contains(me.id) {
+            list.insert(me, at: 0)
+        }
         return list
     }
 

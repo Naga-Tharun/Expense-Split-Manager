@@ -109,6 +109,8 @@ struct ExpenseFormSections {
         currentUser: User?,
         friends: [User],
         selectedParticipantIDs: Binding<Set<UUID>>,
+        excludedGroupMemberIDs: Binding<Set<UUID>>,
+        participantSearchText: Binding<String>,
         participantCount: Int = 0,
         formStarted: Bool = false
     ) -> some View {
@@ -121,21 +123,55 @@ struct ExpenseFormSections {
             }
 
             if selectedGroupID.wrappedValue == nil {
+                // — Manual mode: current user + selectable friends —
+
                 if let me = currentUser {
-                    HStack(spacing: 12) {
-                        avatarView(me)
-                        Text("\(me.name) (you)").foregroundStyle(.primary)
-                        Spacer()
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.cyan).font(.title3)
+                    let meExcluded = excludedGroupMemberIDs.wrappedValue.contains(me.id)
+                    let meIncluded = !meExcluded
+                    Button {
+                        if meExcluded { excludedGroupMemberIDs.wrappedValue.remove(me.id) }
+                        else          { excludedGroupMemberIDs.wrappedValue.insert(me.id) }
+                    } label: {
+                        HStack(spacing: 12) {
+                            avatarView(me)
+                            Text("\(me.name) (you)")
+                                .foregroundStyle(meIncluded ? .primary : .secondary)
+                            Spacer()
+                            Image(systemName: meIncluded ? "checkmark.circle.fill" : "circle")
+                                .foregroundColor(meIncluded ? .cyan : .secondary).font(.title3)
+                        }
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(me.name), \(meIncluded ? "included" : "excluded")")
                 }
 
                 if friends.isEmpty {
                     Text("Add friends to split with them")
                         .font(.subheadline).foregroundStyle(.secondary)
                 } else {
-                    ForEach(friends) { friend in
+                    // Search bar for long friend lists
+                    if friends.count > 5 {
+                        HStack(spacing: 8) {
+                            Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                            TextField("Search friends…", text: participantSearchText)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                            if !participantSearchText.wrappedValue.isEmpty {
+                                Button { participantSearchText.wrappedValue = "" } label: {
+                                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .font(.subheadline)
+                        .accessibilityLabel("Search friends")
+                    }
+
+                    let filteredFriends = participantSearchText.wrappedValue.isEmpty
+                        ? friends
+                        : friends.filter { $0.name.localizedCaseInsensitiveContains(participantSearchText.wrappedValue) }
+
+                    ForEach(filteredFriends) { friend in
                         let isSelected = selectedParticipantIDs.wrappedValue.contains(friend.id)
                         Button {
                             if isSelected { selectedParticipantIDs.wrappedValue.remove(friend.id) }
@@ -150,6 +186,12 @@ struct ExpenseFormSections {
                             }
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("\(friend.name), \(isSelected ? "selected" : "not selected")")
+                    }
+
+                    if filteredFriends.isEmpty && !participantSearchText.wrappedValue.isEmpty {
+                        Text("No friends matching \"\(participantSearchText.wrappedValue)\"")
+                            .font(.subheadline).foregroundStyle(.secondary)
                     }
                 }
 
@@ -159,16 +201,66 @@ struct ExpenseFormSections {
                     FormErrorMessage(message: error, isVisible: true)
                 }
             } else {
+                // — Group mode: toggleable member checkmarks —
+
                 let members = selectedGroup?.members ?? []
                 if members.isEmpty {
                     Text("This group has no members yet").foregroundStyle(.secondary)
                 } else {
-                    ForEach(members) { member in
-                        HStack(spacing: 12) {
-                            avatarView(member)
-                            Text(member.id == currentUser?.id ? "\(member.name) (you)" : member.name)
+                    // Search bar for large groups
+                    if members.count > 5 {
+                        HStack(spacing: 8) {
+                            Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                            TextField("Search members…", text: participantSearchText)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                            if !participantSearchText.wrappedValue.isEmpty {
+                                Button { participantSearchText.wrappedValue = "" } label: {
+                                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
+                        .font(.subheadline)
+                        .accessibilityLabel("Search group members")
                     }
+
+                    let filteredMembers = participantSearchText.wrappedValue.isEmpty
+                        ? members
+                        : members.filter { $0.name.localizedCaseInsensitiveContains(participantSearchText.wrappedValue) }
+
+                    ForEach(filteredMembers) { member in
+                        let isCurrentUser = member.id == currentUser?.id
+                        let isExcluded = excludedGroupMemberIDs.wrappedValue.contains(member.id)
+                        let isIncluded = !isExcluded
+
+                        Button {
+                            if isExcluded { excludedGroupMemberIDs.wrappedValue.remove(member.id) }
+                            else          { excludedGroupMemberIDs.wrappedValue.insert(member.id) }
+                        } label: {
+                            HStack(spacing: 12) {
+                                avatarView(member)
+                                Text(isCurrentUser ? "\(member.name) (you)" : member.name)
+                                    .foregroundStyle(isIncluded ? .primary : .secondary)
+                                Spacer()
+                                Image(systemName: isIncluded ? "checkmark.circle.fill" : "circle")
+                                    .foregroundColor(isIncluded ? .cyan : .secondary).font(.title3)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(member.name), \(isIncluded ? "included" : "excluded")")
+                    }
+
+                    if filteredMembers.isEmpty && !participantSearchText.wrappedValue.isEmpty {
+                        Text("No members matching \"\(participantSearchText.wrappedValue)\"")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
+                }
+
+                if let error = ExpenseFormLogic.participantError(
+                    count: participantCount, formStarted: formStarted
+                ) {
+                    FormErrorMessage(message: error, isVisible: true)
                 }
             }
         }

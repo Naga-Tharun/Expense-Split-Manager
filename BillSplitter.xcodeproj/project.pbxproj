@@ -18,6 +18,7 @@
 
 /* Begin PBXFileReference section */
 		FA1F8CC52FB1B71200040575 /* BillSplitterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BillSplitterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA1F8CDC2FB1C1F200040575 /* BillSplitter.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = BillSplitter.xctestplan; sourceTree = "<group>"; };
 		FACD8CB82ED312A300348BAA /* BillSplitter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BillSplitter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -55,6 +56,7 @@
 		FACD8CAF2ED312A300348BAA = {
 			isa = PBXGroup;
 			children = (
+				FA1F8CDC2FB1C1F200040575 /* BillSplitter.xctestplan */,
 				FACD8CBA2ED312A300348BAA /* BillSplitter */,
 				FA1F8CC62FB1B71200040575 /* BillSplitterTests */,
 				FACD8CB92ED312A300348BAA /* Products */,
