@@ -46,6 +46,12 @@ struct ExpenseDetailView: View {
         }
         .navigationTitle("Expense Detail")
         .navigationBarTitleDisplayMode(.inline)
+        .userActivity(SpotlightIndexer.viewExpenseActivityType) { activity in
+            activity.title = expense.expenseDescription
+            activity.isEligibleForSearch = true
+            activity.isEligibleForPrediction = true
+            activity.persistentIdentifier = SpotlightIndexer.expenseID(expense.id)
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Edit") { showEditSheet = true }

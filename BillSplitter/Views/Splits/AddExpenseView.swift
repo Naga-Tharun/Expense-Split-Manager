@@ -180,6 +180,8 @@ struct AddExpenseView: View {
         saveError.perform { try modelContext.save() }
         if !saveError.showAlert {
             Self.logger.info("Expense created: '\(expenseDescription)' amount=\(amount, format: .fixed(precision: 2)), category=\(category.rawValue), split=\(splitType.rawValue), participants=\(participants.count)")
+            DataService.reloadWidgets()
+            SpotlightIndexer.index(expense)
             showSuccess = true
         }
     }

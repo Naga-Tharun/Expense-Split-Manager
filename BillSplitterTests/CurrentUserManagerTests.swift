@@ -16,6 +16,10 @@ final class CurrentUserManagerTests: XCTestCase {
     private var container: ModelContainer!
     private var context: ModelContext!
 
+    /// Both the standard and shared (App Group) UserDefaults must be cleared
+    /// because `CurrentUserManager` checks `SharedContainer.defaults` first.
+    private static let allStores: [UserDefaults] = [.standard, SharedContainer.defaults]
+
     override func setUp() {
         super.setUp()
         let schema = Schema(SchemaV1.models)
@@ -23,19 +27,24 @@ final class CurrentUserManagerTests: XCTestCase {
         container = try! ModelContainer(for: schema, configurations: [config])
         context = container.mainContext
 
-        // Clear UserDefaults keys used by CurrentUserManager
-        UserDefaults.standard.removeObject(forKey: CurrentUserManager.idKey)
-        UserDefaults.standard.removeObject(forKey: CurrentUserManager.nameKey)
-        UserDefaults.standard.removeObject(forKey: CurrentUserManager.colorKey)
+        // Clear UserDefaults keys in ALL stores used by CurrentUserManager
+        Self.clearDefaults()
     }
 
     override func tearDown() {
-        UserDefaults.standard.removeObject(forKey: CurrentUserManager.idKey)
-        UserDefaults.standard.removeObject(forKey: CurrentUserManager.nameKey)
-        UserDefaults.standard.removeObject(forKey: CurrentUserManager.colorKey)
+        Self.clearDefaults()
         container = nil
         context = nil
         super.tearDown()
+    }
+
+    private static func clearDefaults() {
+        let keys = [CurrentUserManager.idKey, CurrentUserManager.nameKey, CurrentUserManager.colorKey]
+        for store in allStores {
+            for key in keys {
+                store.removeObject(forKey: key)
+            }
+        }
     }
 
     private func makeUser(_ name: String) -> User {
@@ -80,9 +89,9 @@ final class CurrentUserManagerTests: XCTestCase {
     }
 
     func testResolveWithCustomNameAndColor() {
-        // Set custom name/color before first launch
-        UserDefaults.standard.set("Tharun", forKey: CurrentUserManager.nameKey)
-        UserDefaults.standard.set("#FF5722", forKey: CurrentUserManager.colorKey)
+        // Set custom name/color before first launch (in shared defaults, which resolve() checks first)
+        SharedContainer.defaults.set("Tharun", forKey: CurrentUserManager.nameKey)
+        SharedContainer.defaults.set("#FF5722", forKey: CurrentUserManager.colorKey)
 
         let me = CurrentUserManager.resolve(in: container)
         XCTAssertEqual(me.name, "Tharun")
@@ -164,13 +173,15 @@ final class CurrentUserManagerTests: XCTestCase {
 
     func testUpdateProfileChangesNameAndColor() {
         let me = makeUser("OldName")
+        // Store ID in both defaults so CurrentUserManager can find it
+        SharedContainer.defaults.set(me.id.uuidString, forKey: CurrentUserManager.idKey)
         UserDefaults.standard.set(me.id.uuidString, forKey: CurrentUserManager.idKey)
 
         CurrentUserManager.updateProfile(name: "NewName", color: "#FF0000", in: context)
 
-        // Check UserDefaults
-        XCTAssertEqual(UserDefaults.standard.string(forKey: CurrentUserManager.nameKey), "NewName")
-        XCTAssertEqual(UserDefaults.standard.string(forKey: CurrentUserManager.colorKey), "#FF0000")
+        // Check shared UserDefaults (primary store)
+        XCTAssertEqual(SharedContainer.defaults.string(forKey: CurrentUserManager.nameKey), "NewName")
+        XCTAssertEqual(SharedContainer.defaults.string(forKey: CurrentUserManager.colorKey), "#FF0000")
 
         // Check SwiftData
         let users = (try? context.fetch(FetchDescriptor<User>())) ?? []

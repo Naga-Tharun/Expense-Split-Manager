@@ -224,4 +224,102 @@ final class ExpenseFilterTests: XCTestCase {
         let result: [Expense] = [].filtered(searchText: "anything", category: .food, sortOrder: .dateDesc)
         XCTAssertTrue(result.isEmpty)
     }
+
+    // ================================================================
+    // MARK: - Edge Cases
+    // ================================================================
+
+    func testSearchPartialMatch() {
+        let e1 = makeExpense("Restaurant bill", amount: 120)
+        let result = [e1].filtered(searchText: "rest")
+        XCTAssertEqual(result.count, 1)
+    }
+
+    func testSearchMultipleWordsInDescription() {
+        let e1 = makeExpense("Coffee at Blue Bottle", amount: 7)
+        let e2 = makeExpense("Tea at home", amount: 2)
+
+        let result = [e1, e2].filtered(searchText: "bottle")
+        XCTAssertEqual(result.count, 1)
+        XCTAssertEqual(result.first?.expenseDescription, "Coffee at Blue Bottle")
+    }
+
+    func testCategoryFilterAllCategoriesReturnCorrectly() {
+        var expenses: [Expense] = []
+        for cat in ExpenseCategory.allCases {
+            expenses.append(makeExpense("Test \(cat.label)", amount: 10, category: cat))
+        }
+
+        for cat in ExpenseCategory.allCases {
+            let result = expenses.filtered(category: cat)
+            XCTAssertEqual(result.count, 1, "Should find exactly 1 expense for \(cat.label)")
+            XCTAssertEqual(result.first?.category, cat)
+        }
+    }
+
+    func testSortStabilityWithEqualDates() {
+        let date = Date()
+        let e1 = makeExpense("Alpha", amount: 50, date: date)
+        let e2 = makeExpense("Beta", amount: 50, date: date)
+
+        let result = [e1, e2].filtered(sortOrder: .dateDesc)
+        XCTAssertEqual(result.count, 2) // Both should be present, order doesn't matter
+    }
+
+    func testSortStabilityWithEqualAmounts() {
+        let e1 = makeExpense("Alpha", amount: 100)
+        let e2 = makeExpense("Beta", amount: 100)
+
+        let result = [e1, e2].filtered(sortOrder: .amountHigh)
+        XCTAssertEqual(result.count, 2)
+    }
+
+    func testFilterLargeArray() {
+        var expenses: [Expense] = []
+        for i in 0..<200 {
+            expenses.append(makeExpense("Expense \(i)", amount: Double(i)))
+        }
+
+        let result = expenses.filtered(searchText: "Expense 19", sortOrder: .amountHigh)
+        // "Expense 19", "Expense 190", "Expense 191", ..., "Expense 199" = 11 matches
+        XCTAssertEqual(result.count, 11)
+        // Highest amount first (199)
+        XCTAssertEqual(result.first?.amount, 199)
+    }
+
+    func testSearchWithWhitespace() {
+        let e1 = makeExpense("Lunch with team", amount: 50)
+        let result = [e1].filtered(searchText: "  lunch  ")
+        // Whitespace in search should still match if lowercase contains works
+        // Note: the filter uses lowercased().contains() which doesn't trim whitespace
+        // so "  lunch  " won't match "lunch with team" — this tests actual behavior
+        XCTAssertEqual(result.count, 0, "Search with leading/trailing spaces should not match")
+    }
+
+    func testSearchByGroupNamePartial() {
+        let e1 = makeExpense("Dinner", amount: 100, groupName: "Weekend Warriors")
+        let result = [e1].filtered(searchText: "weekend")
+        XCTAssertEqual(result.count, 1)
+    }
+
+    // ================================================================
+    // MARK: - ExpenseSortOption
+    // ================================================================
+
+    func testExpenseSortOptionCaseCount() {
+        XCTAssertEqual(ExpenseSortOption.allCases.count, 4)
+    }
+
+    func testExpenseSortOptionRawValues() {
+        XCTAssertEqual(ExpenseSortOption.dateDesc.rawValue, "Newest")
+        XCTAssertEqual(ExpenseSortOption.dateAsc.rawValue, "Oldest")
+        XCTAssertEqual(ExpenseSortOption.amountHigh.rawValue, "Highest")
+        XCTAssertEqual(ExpenseSortOption.amountLow.rawValue, "Lowest")
+    }
+
+    func testExpenseSortOptionIdentifiable() {
+        for opt in ExpenseSortOption.allCases {
+            XCTAssertEqual(opt.id, opt.rawValue)
+        }
+    }
 }

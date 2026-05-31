@@ -75,7 +75,7 @@ struct BalancesView: View {
         lastNetBalance = newNet
 
         // Celebrate when transitioning from unsettled → all settled
-        if abs(oldNet) > 0.01 && abs(newNet) < 0.01 && !friendsOnly.isEmpty {
+        if abs(oldNet) > BalanceCalculator.epsilon && abs(newNet) < BalanceCalculator.epsilon && !friendsOnly.isEmpty {
             showCelebration = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
                 showCelebration = false
@@ -99,9 +99,9 @@ struct BalancesView: View {
                     }
                     Divider()
                     HStack(spacing: 0) {
-                        summaryPill(title: "You owe",     value: cache.totalYouOwe, color: cache.totalYouOwe > 0.01 ? .red   : .secondary)
+                        summaryPill(title: "You owe",     value: cache.totalYouOwe, color: cache.totalYouOwe > BalanceCalculator.epsilon ? .red   : .secondary)
                         Divider().frame(width: 1, height: 40).padding(.horizontal, 16)
-                        summaryPill(title: "Owed to you", value: cache.totalOwedToYou, color: cache.totalOwedToYou > 0.01 ? .green : .secondary)
+                        summaryPill(title: "Owed to you", value: cache.totalOwedToYou, color: cache.totalOwedToYou > BalanceCalculator.epsilon ? .green : .secondary)
                     }
                 }
                 .frame(maxWidth: .infinity).padding(.vertical, 6)
@@ -111,14 +111,14 @@ struct BalancesView: View {
     }
 
     private var netBalanceColor: Color {
-        if cache.netBalance > 0.01  { return .green }
-        if cache.netBalance < -0.01 { return .red }
+        if cache.netBalance > BalanceCalculator.epsilon  { return .green }
+        if cache.netBalance < -BalanceCalculator.epsilon { return .red }
         return .primary
     }
 
     private var netBalanceLabel: String {
-        if cache.netBalance > 0.01  { return "You are owed overall" }
-        if cache.netBalance < -0.01 { return "You owe overall" }
+        if cache.netBalance > BalanceCalculator.epsilon  { return "You are owed overall" }
+        if cache.netBalance < -BalanceCalculator.epsilon { return "You owe overall" }
         return "All settled up"
     }
 
@@ -156,7 +156,7 @@ struct BalancesView: View {
             AvatarView(user: friend, size: 46)
             VStack(alignment: .leading, spacing: 2) {
                 Text(friend.name).font(.body).fontWeight(.medium)
-                if abs(balance) < 0.01 {
+                if abs(balance) < BalanceCalculator.epsilon {
                     Text("settled up").font(.caption).foregroundColor(.green)
                 } else {
                     Text(balance > 0 ? "owes you" : "you owe")
@@ -167,9 +167,9 @@ struct BalancesView: View {
             VStack(alignment: .trailing, spacing: 4) {
                 Text("\(CurrencyHelper.symbol)\(abs(balance), specifier: "%.2f")")
                     .font(.subheadline).fontWeight(.semibold)
-                    .foregroundColor(abs(balance) < 0.01 ? .secondary : balance > 0 ? .green : .red)
+                    .foregroundColor(abs(balance) < BalanceCalculator.epsilon ? .secondary : balance > 0 ? .green : .red)
 
-                if balance < -0.01 {
+                if balance < -BalanceCalculator.epsilon {
                     Button("Settle") {
                         settleFrom   = currentUser
                         settleTo     = friend

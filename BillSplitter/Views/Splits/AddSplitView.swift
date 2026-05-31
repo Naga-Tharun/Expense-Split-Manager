@@ -17,18 +17,26 @@ struct AddSplitView: View {
     @State private var showAddGroup   = false
     @State private var showSettleUp   = false
     @State private var saveError      = SaveErrorState()
+    @State private var navigationPath = NavigationPath()
 
     // Search & filter state
     @State private var searchText      = ""
     @State private var filterCategory: ExpenseCategory? = nil
     @State private var sortOrder: ExpenseSortOption = .dateDesc
 
+    /// Deep link from Spotlight — when set, navigates to that expense's detail.
+    @Binding var deepLinkExpenseID: UUID?
+
+    init(deepLinkExpenseID: Binding<UUID?> = .constant(nil)) {
+        _deepLinkExpenseID = deepLinkExpenseID
+    }
+
     private var filteredExpenses: [Expense] {
         expenses.filtered(searchText: searchText, category: filterCategory, sortOrder: sortOrder)
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             List {
                 // Quick Actions
                 Section {
@@ -72,10 +80,15 @@ struct AddSplitView: View {
                 Haptics.light()
             }
             .navigationTitle("Activity")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button { showAddExpense = true } label: { Image(systemName: "plus") }
-                }
+            .navigationDestination(for: Expense.self) { expense in
+                ExpenseDetailView(expense: expense)
+            }
+            .onChange(of: deepLinkExpenseID) { _, newID in
+                guard let expenseID = newID,
+                      let expense = expenses.first(where: { $0.id == expenseID }) else { return }
+                navigationPath = NavigationPath()
+                navigationPath.append(expense)
+                deepLinkExpenseID = nil
             }
             .sheet(isPresented: $showAddExpense) { AddExpenseView() }
             .sheet(isPresented: $showAddFriend)  { AddFriendView() }

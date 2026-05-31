@@ -202,9 +202,7 @@ struct FilteredExpensesList: View {
                 }
             } else {
                 ForEach(filtered.prefix(100)) { expense in
-                    NavigationLink {
-                        ExpenseDetailView(expense: expense)
-                    } label: {
+                    NavigationLink(value: expense) {
                         ExpenseRow(expense: expense)
                     }
                 }

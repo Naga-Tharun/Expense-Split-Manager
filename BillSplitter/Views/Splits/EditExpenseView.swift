@@ -229,7 +229,11 @@ struct EditExpenseView: View {
         expense.participants = newParticipants
 
         saveError.perform { try modelContext.save() }
-        if !saveError.showAlert { showSuccess = true }
+        if !saveError.showAlert {
+            DataService.reloadWidgets()
+            SpotlightIndexer.index(expense)
+            showSuccess = true
+        }
     }
 }
 

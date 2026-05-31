@@ -9,8 +9,15 @@
 
 import SwiftData
 import Foundation
+import WidgetKit
 
 enum DataService {
+
+    /// Tells WidgetKit to refresh all BillSplitter widgets.
+    /// Call after any data mutation that affects balances.
+    static func reloadWidgets() {
+        WidgetCenter.shared.reloadAllTimelines()
+    }
 
     // MARK: - Friend Deletion
 
@@ -33,6 +40,8 @@ enum DataService {
 
         context.delete(friend)
         try context.save()
+        reloadWidgets()
+        SpotlightIndexer.deindex(friendID: friend.id)
     }
 
     // MARK: - Expense Deletion
@@ -42,8 +51,11 @@ enum DataService {
         _ expenses: [Expense],
         context: ModelContext
     ) throws {
+        let ids = expenses.map(\.id)
         expenses.forEach { context.delete($0) }
         try context.save()
+        reloadWidgets()
+        SpotlightIndexer.deindex(expenseIDs: ids)
     }
 
     // MARK: - Settlement Deletion
@@ -55,6 +67,7 @@ enum DataService {
     ) throws {
         settlements.forEach { context.delete($0) }
         try context.save()
+        reloadWidgets()
     }
 
     // MARK: - Group Deletion
@@ -66,6 +79,7 @@ enum DataService {
     ) throws {
         context.delete(group)
         try context.save()
+        reloadWidgets()
     }
 
     // MARK: - Clear All Data
@@ -86,6 +100,8 @@ enum DataService {
         settlements.forEach  { context.delete($0) }
         allUsers.filter { $0.id != currentUserID }.forEach { context.delete($0) }
         try context.save()
+        reloadWidgets()
+        SpotlightIndexer.deleteAll()
     }
 
     // MARK: - Add Friend
@@ -99,6 +115,7 @@ enum DataService {
         let user = User(name: name, profileColor: profileColor)
         context.insert(user)
         try context.save()
+        SpotlightIndexer.index(user)
     }
 
     // MARK: - Record Settlement
@@ -114,5 +131,6 @@ enum DataService {
         let s = Settlement(fromFriend: from, toFriend: to, amount: amount, notes: notes)
         context.insert(s)
         try context.save()
+        reloadWidgets()
     }
 }

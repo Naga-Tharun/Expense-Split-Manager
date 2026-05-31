@@ -16,8 +16,11 @@ enum CurrencyHelper {
 
     /// Returns the symbol for the stored currency code.
     /// On first launch, auto-detects from the device locale.
+    /// Reads from shared App Group defaults so the widget can access it too.
     static var symbol: String {
-        let code = UserDefaults.standard.string(forKey: "currency") ?? defaultCurrencyCode
+        let code = SharedContainer.defaults.string(forKey: "currency")
+            ?? UserDefaults.standard.string(forKey: "currency")
+            ?? defaultCurrencyCode
         return Self.symbol(for: code)
     }
 

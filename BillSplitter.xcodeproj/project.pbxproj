@@ -6,6 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		FA1F8CE72FB1CC5B00040575 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA1F8CE62FB1CC5B00040575 /* WidgetKit.framework */; };
+		FA1F8CE92FB1CC5B00040575 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA1F8CE82FB1CC5B00040575 /* SwiftUI.framework */; };
+		FA1F8CFA2FB1CC5C00040575 /* BillSplitterWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FA1F8CE42FB1CC5B00040575 /* BillSplitterWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		FA76EFF12FB9BD4400FBE9E6 /* CoreSpotlight.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA76EFF02FB9BD4400FBE9E6 /* CoreSpotlight.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		FA1F8CC92FB1B71200040575 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -14,13 +21,74 @@
 			remoteGlobalIDString = FACD8CB72ED312A300348BAA;
 			remoteInfo = BillSplitter;
 		};
+		FA1F8CF82FB1CC5C00040575 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FACD8CB02ED312A300348BAA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FA1F8CE32FB1CC5B00040575;
+			remoteInfo = BillSplitterWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		FA1F8CFF2FB1CC5C00040575 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				FA1F8CFA2FB1CC5C00040575 /* BillSplitterWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		FA1F8CC52FB1B71200040575 /* BillSplitterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BillSplitterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA1F8CDC2FB1C1F200040575 /* BillSplitter.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = BillSplitter.xctestplan; sourceTree = "<group>"; };
+		FA1F8CE42FB1CC5B00040575 /* BillSplitterWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BillSplitterWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA1F8CE62FB1CC5B00040575 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		FA1F8CE82FB1CC5B00040575 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		FA1F8D182FB1D26300040575 /* BillSplitterWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BillSplitterWidgetExtension.entitlements; sourceTree = "<group>"; };
+		FA76EFF02FB9BD4400FBE9E6 /* CoreSpotlight.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreSpotlight.framework; path = System/Library/Frameworks/CoreSpotlight.framework; sourceTree = SDKROOT; };
 		FACD8CB82ED312A300348BAA /* BillSplitter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BillSplitter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		FA1F8CFB2FB1CC5C00040575 /* Exceptions for "BillSplitterWidget" folder in "BillSplitterWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = FA1F8CE32FB1CC5B00040575 /* BillSplitterWidgetExtension */;
+		};
+		FA1F8D0A2FB1CDCB00040575 /* Exceptions for "BillSplitter" folder in "BillSplitterWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Extensions/ColorExtension.swift,
+				Extensions/CurrencyHelper.swift,
+				Extensions/SharedContainer.swift,
+				Models/AppEnums.swift,
+				Models/BalanceCalculator.swift,
+				Models/CurrentUserManager.swift,
+				Models/Expense.swift,
+				Models/ExpenseParticipant.swift,
+				Models/Group.swift,
+				Models/SchemaVersioning.swift,
+				Models/Settlement.swift,
+				Models/User.swift,
+			);
+			target = FA1F8CE32FB1CC5B00040575 /* BillSplitterWidgetExtension */;
+		};
+		FA939EA62FB1DD9F004CC21A /* Exceptions for "BillSplitter" folder in "BillSplitter" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = FACD8CB72ED312A300348BAA /* BillSplitter */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		FA1F8CC62FB1B71200040575 /* BillSplitterTests */ = {
@@ -28,8 +96,20 @@
 			path = BillSplitterTests;
 			sourceTree = "<group>";
 		};
+		FA1F8CEA2FB1CC5B00040575 /* BillSplitterWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FA1F8CFB2FB1CC5C00040575 /* Exceptions for "BillSplitterWidget" folder in "BillSplitterWidgetExtension" target */,
+			);
+			path = BillSplitterWidget;
+			sourceTree = "<group>";
+		};
 		FACD8CBA2ED312A300348BAA /* BillSplitter */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FA939EA62FB1DD9F004CC21A /* Exceptions for "BillSplitter" folder in "BillSplitter" target */,
+				FA1F8D0A2FB1CDCB00040575 /* Exceptions for "BillSplitter" folder in "BillSplitterWidgetExtension" target */,
+			);
 			path = BillSplitter;
 			sourceTree = "<group>";
 		};
@@ -43,22 +123,45 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FA1F8CE12FB1CC5B00040575 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FA1F8CE92FB1CC5B00040575 /* SwiftUI.framework in Frameworks */,
+				FA1F8CE72FB1CC5B00040575 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FACD8CB52ED312A300348BAA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA76EFF12FB9BD4400FBE9E6 /* CoreSpotlight.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		FA1F8CE52FB1CC5B00040575 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				FA76EFF02FB9BD4400FBE9E6 /* CoreSpotlight.framework */,
+				FA1F8CE62FB1CC5B00040575 /* WidgetKit.framework */,
+				FA1F8CE82FB1CC5B00040575 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		FACD8CAF2ED312A300348BAA = {
 			isa = PBXGroup;
 			children = (
+				FA1F8D182FB1D26300040575 /* BillSplitterWidgetExtension.entitlements */,
 				FA1F8CDC2FB1C1F200040575 /* BillSplitter.xctestplan */,
 				FACD8CBA2ED312A300348BAA /* BillSplitter */,
 				FA1F8CC62FB1B71200040575 /* BillSplitterTests */,
+				FA1F8CEA2FB1CC5B00040575 /* BillSplitterWidget */,
+				FA1F8CE52FB1CC5B00040575 /* Frameworks */,
 				FACD8CB92ED312A300348BAA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -68,6 +171,7 @@
 			children = (
 				FACD8CB82ED312A300348BAA /* BillSplitter.app */,
 				FA1F8CC52FB1B71200040575 /* BillSplitterTests.xctest */,
+				FA1F8CE42FB1CC5B00040575 /* BillSplitterWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -98,6 +202,28 @@
 			productReference = FA1F8CC52FB1B71200040575 /* BillSplitterTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		FA1F8CE32FB1CC5B00040575 /* BillSplitterWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FA1F8CFC2FB1CC5C00040575 /* Build configuration list for PBXNativeTarget "BillSplitterWidgetExtension" */;
+			buildPhases = (
+				FA1F8CE02FB1CC5B00040575 /* Sources */,
+				FA1F8CE12FB1CC5B00040575 /* Frameworks */,
+				FA1F8CE22FB1CC5B00040575 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				FA1F8CEA2FB1CC5B00040575 /* BillSplitterWidget */,
+			);
+			name = BillSplitterWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = BillSplitterWidgetExtension;
+			productReference = FA1F8CE42FB1CC5B00040575 /* BillSplitterWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		FACD8CB72ED312A300348BAA /* BillSplitter */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = FACD8CC52ED312A500348BAA /* Build configuration list for PBXNativeTarget "BillSplitter" */;
@@ -105,10 +231,12 @@
 				FACD8CB42ED312A300348BAA /* Sources */,
 				FACD8CB52ED312A300348BAA /* Frameworks */,
 				FACD8CB62ED312A300348BAA /* Resources */,
+				FA1F8CFF2FB1CC5C00040575 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				FA1F8CF92FB1CC5C00040575 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				FACD8CBA2ED312A300348BAA /* BillSplitter */,
@@ -134,6 +262,9 @@
 						CreatedOnToolsVersion = 26.4.1;
 						TestTargetID = FACD8CB72ED312A300348BAA;
 					};
+					FA1F8CE32FB1CC5B00040575 = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
 					FACD8CB72ED312A300348BAA = {
 						CreatedOnToolsVersion = 26.1.1;
 					};
@@ -155,12 +286,20 @@
 			targets = (
 				FACD8CB72ED312A300348BAA /* BillSplitter */,
 				FA1F8CC42FB1B71200040575 /* BillSplitterTests */,
+				FA1F8CE32FB1CC5B00040575 /* BillSplitterWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		FA1F8CC32FB1B71200040575 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FA1F8CE22FB1CC5B00040575 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -184,6 +323,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FA1F8CE02FB1CC5B00040575 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FACD8CB42ED312A300348BAA /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -198,6 +344,11 @@
 			isa = PBXTargetDependency;
 			target = FACD8CB72ED312A300348BAA /* BillSplitter */;
 			targetProxy = FA1F8CC92FB1B71200040575 /* PBXContainerItemProxy */;
+		};
+		FA1F8CF92FB1CC5C00040575 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FA1F8CE32FB1CC5B00040575 /* BillSplitterWidgetExtension */;
+			targetProxy = FA1F8CF82FB1CC5C00040575 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -243,6 +394,72 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BillSplitter.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BillSplitter";
+			};
+			name = Release;
+		};
+		FA1F8CFD2FB1CC5C00040575 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = BillSplitterWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = TMWRANMUCB;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BillSplitterWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BillSplitterWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = project.ios.BillSplitter.BillSplitterWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FA1F8CFE2FB1CC5C00040575 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = BillSplitterWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = TMWRANMUCB;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BillSplitterWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BillSplitterWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = project.ios.BillSplitter.BillSplitterWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -374,11 +591,16 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = BillSplitter/BillSplitter.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = TMWRANMUCB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BillSplitter/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Bill Split";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -406,11 +628,16 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = BillSplitter/BillSplitter.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = TMWRANMUCB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BillSplitter/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Bill Split";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -441,6 +668,15 @@
 			buildConfigurations = (
 				FA1F8CCC2FB1B71200040575 /* Debug */,
 				FA1F8CCD2FB1B71200040575 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FA1F8CFC2FB1CC5C00040575 /* Build configuration list for PBXNativeTarget "BillSplitterWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FA1F8CFD2FB1CC5C00040575 /* Debug */,
+				FA1F8CFE2FB1CC5C00040575 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

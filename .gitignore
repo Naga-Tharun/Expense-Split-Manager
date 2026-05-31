@@ -1,0 +1,66 @@
+# Xcode
+build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+xcschememanagement.plist
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# App packaging
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
+.swiftpm/
+
+# CocoaPods / Carthage
+Pods/
+Carthage/Build/
+Carthage/Checkouts/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Code coverage
+*.gcno
+*.gcda
+
+# Provisioning profiles (keep these out of repos)
+*.mobileprovision
+*.provisionprofile
+
+# Icon compositing layers and source assets
+*.psd
+*.sketch
+*.fig
+IconComposer_*.png
+IconComposer_Setup_Guide.md
+AppIcon.icon/
+Layer_*.png
+ROADMAP.md
+
+# Other
+*.hmap
+*.ipa
+*.log
+*~

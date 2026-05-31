@@ -70,10 +70,16 @@ struct FriendDetailView: View {
         }
         .navigationTitle(friend.name)
         .navigationBarTitleDisplayMode(.inline)
+        .userActivity(SpotlightIndexer.viewFriendActivityType) { activity in
+            activity.title = friend.name
+            activity.isEligibleForSearch = true
+            activity.isEligibleForPrediction = true
+            activity.persistentIdentifier = SpotlightIndexer.friendID(friend.id)
+        }
         .onAppear { refreshCache() }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                if balance < -0.01 {
+                if balance < -BalanceCalculator.epsilon {
                     Button("Settle Up") { showSettleUp = true }
                         .fontWeight(.semibold).tint(.cyan)
                 }
@@ -100,7 +106,7 @@ struct FriendDetailView: View {
                 AvatarView(user: friend, size: 76)
                 Text(friend.name).font(.title2).fontWeight(.bold)
 
-                if abs(balance) < 0.01 {
+                if abs(balance) < BalanceCalculator.epsilon {
                     Label("All settled up", systemImage: "checkmark.circle.fill")
                         .font(.subheadline).foregroundColor(.green)
                 } else {
@@ -111,7 +117,7 @@ struct FriendDetailView: View {
                             .font(.system(size: 34, weight: .bold, design: .rounded))
                             .foregroundColor(balance > 0 ? .green : .red)
                     }
-                    if balance < -0.01 {
+                    if balance < -BalanceCalculator.epsilon {
                         Button {
                             showSettleUp = true
                         } label: {

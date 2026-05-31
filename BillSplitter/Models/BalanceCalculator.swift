@@ -8,7 +8,10 @@ import Foundation
 /// All balance amounts are from "my" perspective:
 ///   positive → that friend owes ME
 ///   negative → I owe that friend
-struct BalanceCalculator {
+enum BalanceCalculator {
+
+    /// Threshold below which a balance is treated as zero (avoids floating-point dust).
+    static let epsilon: Double = 0.005
 
     static func netBalances(
         expenses: [Expense],
@@ -74,10 +77,10 @@ struct BalanceCalculator {
     }
 
     static func totalOwedToYou(_ balances: [UUID: Double]) -> Double {
-        balances.values.filter { $0 > 0.005 }.reduce(0, +)
+        balances.values.filter { $0 > epsilon }.reduce(0, +)
     }
 
     static func totalYouOwe(_ balances: [UUID: Double]) -> Double {
-        abs(balances.values.filter { $0 < -0.005 }.reduce(0, +))
+        abs(balances.values.filter { $0 < -epsilon }.reduce(0, +))
     }
 }

@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import AppIntents
 import os
 
 private let logger = Logger(subsystem: "com.billsplitter", category: "app")
@@ -27,29 +28,19 @@ struct BillSplitterApp: App {
 
     init() {
         logger.info("BillSplitter launching")
-        let schema = Schema(SchemaV1.models)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
-        if let container = try? ModelContainer(
-            for: schema,
-            migrationPlan: BillSplitterMigrationPlan.self,
-            configurations: [config]
-        ) {
+        if let container = try? SharedContainer.makeModelContainer() {
             sharedModelContainer = container
         } else {
             // Schema change — delete the old store and retry as last resort
-            let storeURL = config.url
+            let storeURL = SharedContainer.storeURL
             let related = [storeURL,
                            storeURL.deletingPathExtension().appendingPathExtension("sqlite-wal"),
                            storeURL.deletingPathExtension().appendingPathExtension("sqlite-shm")]
             related.forEach { try? FileManager.default.removeItem(at: $0) }
             logger.warning("Schema migration failed — store reset to fresh state")
 
-            guard let freshContainer = try? ModelContainer(
-                for: schema,
-                migrationPlan: BillSplitterMigrationPlan.self,
-                configurations: [config]
-            ) else {
+            guard let freshContainer = try? SharedContainer.makeModelContainer() else {
                 fatalError("Could not create ModelContainer even after reset")
             }
             sharedModelContainer = freshContainer
@@ -57,6 +48,22 @@ struct BillSplitterApp: App {
 
         CurrentUserManager.resolve(in: sharedModelContainer)
         logger.info("App initialized — container ready, current user resolved")
+
+        // Index existing data into Spotlight for home screen search
+        Self.reindexSpotlight(in: sharedModelContainer)
+
+        // Tell Siri about our App Shortcuts so voice phrases work immediately.
+        // This must be called after any change to shortcuts or their parameters.
+        BillSplitterShortcuts.updateAppShortcutParameters()
+    }
+
+    /// Bulk re-index all expenses and friends into Core Spotlight.
+    private static func reindexSpotlight(in container: ModelContainer) {
+        let context = ModelContext(container)
+        let expenses = (try? context.fetch(FetchDescriptor<Expense>())) ?? []
+        let allUsers = (try? context.fetch(FetchDescriptor<User>())) ?? []
+        let friends  = allUsers.filter { $0.id != CurrentUserManager.currentUserID }
+        SpotlightIndexer.reindexAll(expenses: expenses, friends: friends)
     }
 
     var body: some Scene {

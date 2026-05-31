@@ -11,11 +11,19 @@ struct GroupDetailView: View {
     let group: Group
 
     @Query(sort: \User.name) private var allUsers: [User]
+    @Query(sort: \Expense.date, order: .reverse) private var allExpenses: [Expense]
+    @Query private var allSettlements: [Settlement]
 
     @State private var showAddMember  = false
     @State private var showAddExpense = false
     @State private var showSettleUp   = false
+    @State private var showEditGroup  = false
     @State private var saveError      = SaveErrorState()
+
+    // Member removal with settle warning
+    @State private var pendingRemoveMember: User?
+    @State private var showSettleWarning   = false
+    @State private var unsettledAmount: Double = 0
 
     // Search & filter state
     @State private var searchText      = ""
@@ -79,6 +87,10 @@ struct GroupDetailView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
+                    Button { showEditGroup = true } label: {
+                        Label("Edit Group", systemImage: "pencil")
+                    }
+                    Divider()
                     Button { showAddExpense = true } label: {
                         Label("Add Expense", systemImage: "plus.circle.fill")
                     }
@@ -92,11 +104,25 @@ struct GroupDetailView: View {
             }
         }
         .onAppear { ensureCurrentUserIsMember() }
+        .sheet(isPresented: $showEditGroup)  { EditGroupView(group: group) }
         .sheet(isPresented: $showAddMember) {
             AddMemberSheet(group: group, allUsers: allUsers, currentUserID: currentUser?.id)
         }
         .sheet(isPresented: $showAddExpense) { AddExpenseView(preselectedGroup: group) }
         .sheet(isPresented: $showSettleUp)   { SettleUpView() }
+        .alert("Unsettled Balance", isPresented: $showSettleWarning) {
+            Button("Settle Up") {
+                pendingRemoveMember = nil
+                showSettleUp = true
+            }
+            Button("OK", role: .cancel) {
+                pendingRemoveMember = nil
+            }
+        } message: {
+            if let member = pendingRemoveMember {
+                Text("\(member.name) has an unsettled balance of \(CurrencyHelper.formattedAbs(unsettledAmount)). Please settle up before removing them from the group.")
+            }
+        }
         .saveErrorAlert($saveError)
     }
 
@@ -110,12 +136,44 @@ struct GroupDetailView: View {
     }
 
     private func removeMember(_ offsets: IndexSet) {
-        let toDelete = offsets.map { members[$0] }
-        guard !toDelete.contains(where: { $0.id == currentUser?.id }) else { return }
+        let toRemove = offsets.map { members[$0] }
+        // Don't allow removing yourself
+        guard !toRemove.contains(where: { $0.id == currentUser?.id }) else { return }
+
+        guard let member = toRemove.first else { return }
+        attemptRemoveMember(member)
+    }
+
+    /// Check if member has unsettled balance before removing.
+    private func attemptRemoveMember(_ member: User) {
+        guard let currentUserID = currentUser?.id else {
+            confirmRemoveMember(member)
+            return
+        }
+
+        let balance = BalanceCalculator.balance(
+            for: member.id,
+            expenses: allExpenses,
+            settlements: allSettlements,
+            currentUserID: currentUserID
+        )
+
+        if abs(balance) > BalanceCalculator.epsilon {
+            pendingRemoveMember = member
+            unsettledAmount = balance
+            showSettleWarning = true
+        } else {
+            confirmRemoveMember(member)
+        }
+    }
+
+    private func confirmRemoveMember(_ member: User) {
         var updated = members
-        updated.remove(atOffsets: offsets)
+        updated.removeAll { $0.id == member.id }
         group.members = updated
         saveError.perform { try modelContext.save() }
+        pendingRemoveMember = nil
+        Haptics.warning()
     }
 }
 

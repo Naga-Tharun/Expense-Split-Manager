@@ -58,6 +58,10 @@ struct ProfileView: View {
                 Text("Deletes all expenses, groups, and settlements. Cannot be undone.")
             }
             .saveErrorAlert($saveError)
+            .onChange(of: currency) { _, newCode in
+                SharedContainer.defaults.set(newCode, forKey: "currency")
+                DataService.reloadWidgets()
+            }
         }
     }
 

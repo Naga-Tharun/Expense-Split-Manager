@@ -17,6 +17,14 @@ struct FriendsView: View {
     @State private var isPresentingAddFriend = false
     @State private var friendToDelete: User? = nil
     @State private var saveError = SaveErrorState()
+    @State private var navigationPath = NavigationPath()
+
+    /// Deep link from Spotlight — when set, navigates to that friend's detail.
+    @Binding var deepLinkFriendID: UUID?
+
+    init(deepLinkFriendID: Binding<UUID?> = .constant(nil)) {
+        _deepLinkFriendID = deepLinkFriendID
+    }
 
     private var currentUserID: UUID? { CurrentUserManager.currentUserID }
 
@@ -25,9 +33,12 @@ struct FriendsView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             friendsContent
                 .navigationTitle("Friends")
+                .navigationDestination(for: User.self) { friend in
+                    FriendDetailView(friend: friend)
+                }
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button { isPresentingAddFriend = true } label: {
@@ -36,6 +47,13 @@ struct FriendsView: View {
                     }
                 }
                 .onAppear { refreshCache() }
+                .onChange(of: deepLinkFriendID) { _, newID in
+                    guard let friendID = newID,
+                          let friend = friends.first(where: { $0.id == friendID }) else { return }
+                    navigationPath = NavigationPath()
+                    navigationPath.append(friend)
+                    deepLinkFriendID = nil
+                }
                 .sheet(isPresented: $isPresentingAddFriend) { AddFriendView() }
                 .alert("Delete Friend?", isPresented: Binding(
                     get: { friendToDelete != nil },
@@ -72,9 +90,7 @@ struct FriendsView: View {
         } else {
             List {
                 ForEach(friends) { friend in
-                    NavigationLink {
-                        FriendDetailView(friend: friend)
-                    } label: {
+                    NavigationLink(value: friend) {
                         FriendRowView(friend: friend, balance: cache.balance(for: friend.id))
                     }
                 }
