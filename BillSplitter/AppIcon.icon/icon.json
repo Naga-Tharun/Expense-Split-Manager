@@ -1,0 +1,216 @@
+{
+  "fill-specializations" : [
+    {
+      "value" : {
+        "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+      }
+    },
+    {
+      "appearance" : "dark",
+      "value" : "system-dark"
+    }
+  ],
+  "groups" : [
+    {
+      "blend-mode" : "screen",
+      "layers" : [
+        {
+          "hidden" : false,
+          "image-name" : "Layer_7_Top_Highlight.png",
+          "name" : "Layer_7_Top_Highlight",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -7,
+              -84.5
+            ]
+          }
+        }
+      ],
+      "name" : "Effects & Highlights",
+      "opacity" : 0.22,
+      "shadow" : {
+        "kind" : "none",
+        "opacity" : 0.5
+      },
+      "specular" : false,
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.5
+      }
+    },
+    {
+      "blend-mode" : "soft-light",
+      "blur-material" : 0.5,
+      "layers" : [
+        {
+          "blend-mode" : "plus-lighter",
+          "glass" : true,
+          "image-name" : "Layer_6_Wallet_Button.png",
+          "name" : "Layer_6_Wallet_Button",
+          "position" : {
+            "scale" : 1.2,
+            "translation-in-points" : [
+              -7.199999999999932,
+              -58.200000000000045
+            ]
+          }
+        },
+        {
+          "glass" : true,
+          "image-name" : "Layer_5_Wallet_Flap.png",
+          "name" : "Layer_5_Wallet_Flap",
+          "position" : {
+            "scale" : 1.2,
+            "translation-in-points" : [
+              -7.199999999999932,
+              -58.200000000000045
+            ]
+          }
+        }
+      ],
+      "lighting" : "individual",
+      "name" : "Wallet Details",
+      "opacity" : 1,
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.1
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.52
+      }
+    },
+    {
+      "blend-mode-specializations" : [
+        {
+          "appearance" : "tinted",
+          "value" : "plus-lighter"
+        }
+      ],
+      "blur-material" : null,
+      "layers" : [
+        {
+          "hidden" : false,
+          "image-name" : "Layer_2_Wallet_Body.png",
+          "name" : "Layer_2_Wallet_Body",
+          "position" : {
+            "scale" : 1.03,
+            "translation-in-points" : [
+              0.5,
+              -46.339062499999955
+            ]
+          }
+        },
+        {
+          "hidden" : true,
+          "image-name" : "Layer_4_Inner_Card_2.png",
+          "name" : "Layer_4_Inner_Card_2",
+          "opacity" : 0.52,
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -3,
+              -138.5
+            ]
+          }
+        },
+        {
+          "hidden" : true,
+          "image-name" : "Layer_3_Inner_Card_1.png",
+          "name" : "Layer_3_Inner_Card_1",
+          "opacity" : 0.58,
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              42,
+              -131
+            ]
+          }
+        }
+      ],
+      "lighting" : "individual",
+      "name" : "Wallet Body",
+      "opacity" : 0.8,
+      "position" : {
+        "scale" : 1.1,
+        "translation-in-points" : [
+          0,
+          0
+        ]
+      },
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.14
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.62
+      }
+    },
+    {
+      "blend-mode" : "normal",
+      "hidden-specializations" : [
+        {
+          "value" : false
+        },
+        {
+          "appearance" : "dark",
+          "value" : true
+        },
+        {
+          "appearance" : "tinted",
+          "value" : true
+        }
+      ],
+      "layers" : [
+        {
+          "blend-mode" : "multiply",
+          "glass" : false,
+          "image-name" : "Layer_8_Edge_Shadow.png",
+          "name" : "Layer_8_Edge_Shadow"
+        },
+        {
+          "blend-mode" : "soft-light",
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "Layer_1_Ambient_Glow.png",
+          "name" : "Layer_1_Ambient_Glow"
+        },
+        {
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "Layer_0_Background_Base.png",
+          "name" : "Layer_0_Background_Base"
+        }
+      ],
+      "lighting" : "individual",
+      "name" : "Background",
+      "opacity" : 1,
+      "position" : {
+        "scale" : 1,
+        "translation-in-points" : [
+          0,
+          0
+        ]
+      },
+      "shadow" : {
+        "kind" : "none",
+        "opacity" : 0.5
+      },
+      "specular" : false,
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
