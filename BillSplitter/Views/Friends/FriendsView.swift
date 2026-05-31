@@ -39,6 +39,9 @@ struct FriendsView: View {
                 .navigationDestination(for: User.self) { friend in
                     FriendDetailView(friend: friend)
                 }
+                .navigationDestination(for: Expense.self) { expense in
+                    ExpenseDetailView(expense: expense)
+                }
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button { isPresentingAddFriend = true } label: {
@@ -46,7 +49,16 @@ struct FriendsView: View {
                         }
                     }
                 }
-                .onAppear { refreshCache() }
+                .onAppear {
+                    refreshCache()
+                    // Handle pending deep link on appear (in case onChange fired before view was ready)
+                    if let friendID = deepLinkFriendID,
+                       let friend = friends.first(where: { $0.id == friendID }) {
+                        navigationPath = NavigationPath()
+                        navigationPath.append(friend)
+                        deepLinkFriendID = nil
+                    }
+                }
                 .onChange(of: deepLinkFriendID) { _, newID in
                     guard let friendID = newID,
                           let friend = friends.first(where: { $0.id == friendID }) else { return }

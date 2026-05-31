@@ -26,6 +26,10 @@ struct BalancesWidgetEntryView: View {
             SmallBalanceView(entry: entry)
         case .systemMedium:
             MediumBalanceView(entry: entry)
+        case .accessoryCircular:
+            CircularLockScreenView(entry: entry)
+        case .accessoryRectangular:
+            RectangularLockScreenView(entry: entry)
         default:
             SmallBalanceView(entry: entry)
         }
@@ -233,6 +237,79 @@ struct WidgetAvatar: View {
     }
 }
 
+// MARK: - Lock Screen — Circular
+
+struct CircularLockScreenView: View {
+    let entry: BalancesEntry
+
+    var body: some View {
+        Gauge(value: gaugeValue, in: 0...1) {
+            Image(systemName: "dollarsign")
+        } currentValueLabel: {
+            Text(compactAmount(entry.netBalance))
+                .font(.system(.caption2, design: .rounded))
+                .fontWeight(.bold)
+        }
+        .gaugeStyle(.accessoryCircular)
+    }
+
+    /// Map net balance to 0…1 for the gauge (0.5 = settled)
+    private var gaugeValue: Double {
+        if entry.topBalances.isEmpty && entry.netBalance == 0 { return 0.5 }
+        // Clamp between -1000…1000 for a reasonable gauge range
+        let clamped = min(max(entry.netBalance, -1000), 1000)
+        return (clamped + 1000) / 2000
+    }
+}
+
+// MARK: - Lock Screen — Rectangular
+
+struct RectangularLockScreenView: View {
+    let entry: BalancesEntry
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 4) {
+                Image(systemName: "dollarsign.circle.fill")
+                    .font(.caption2)
+                Text("BillSplitter")
+                    .font(.caption2)
+                    .fontWeight(.medium)
+            }
+
+            if entry.topBalances.isEmpty && entry.netBalance == 0 {
+                Text("All settled up!")
+                    .font(.headline)
+            } else {
+                HStack(spacing: 4) {
+                    Text(compactAmount(entry.netBalance))
+                        .font(.system(.headline, design: .rounded))
+                        .fontWeight(.bold)
+                    Text(entry.netBalance >= 0 ? "owed to you" : "you owe")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+
+                if let top = entry.topBalances.first {
+                    Text("\(top.name): \(compactAmount(top.amount))")
+                        .font(.caption2)
+                        .lineLimit(1)
+                }
+            }
+        }
+    }
+}
+
+/// Compact amount string for lock screen (no currency symbol clutter)
+private func compactAmount(_ value: Double) -> String {
+    let abs = abs(value)
+    let sign = value < 0 ? "-" : ""
+    if abs >= 1_000 {
+        return "\(sign)$\(String(format: "%.1fK", abs / 1000))"
+    }
+    return "\(sign)$\(String(format: "%.0f", abs))"
+}
+
 // MARK: - Number Formatting
 
 /// Formats a Double for compact widget display.
@@ -259,6 +336,20 @@ private func formatNumber(_ value: Double) -> String {
 }
 
 #Preview("Medium", as: .systemMedium) {
+    BalancesWidget()
+} timeline: {
+    BalancesEntry.placeholder
+    BalancesEntry.empty
+}
+
+#Preview("Circular", as: .accessoryCircular) {
+    BalancesWidget()
+} timeline: {
+    BalancesEntry.placeholder
+    BalancesEntry.empty
+}
+
+#Preview("Rectangular", as: .accessoryRectangular) {
     BalancesWidget()
 } timeline: {
     BalancesEntry.placeholder

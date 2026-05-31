@@ -32,7 +32,6 @@ struct BillSplitterShortcuts: AppShortcutsProvider {
             phrases: [
                 "Add an expense in \(.applicationName)",
                 "Split a bill in \(.applicationName)",
-                "Add expense with \(\.$friend) in \(.applicationName)",
                 "Log an expense in \(.applicationName)",
                 "New bill in \(.applicationName)"
             ],
@@ -47,7 +46,6 @@ struct BillSplitterShortcuts: AppShortcutsProvider {
             phrases: [
                 "Check my balance in \(.applicationName)",
                 "How much do I owe in \(.applicationName)",
-                "Check balance with \(\.$friend) in \(.applicationName)",
                 "Who owes me in \(.applicationName)",
                 "Show balances in \(.applicationName)"
             ],
@@ -61,8 +59,6 @@ struct BillSplitterShortcuts: AppShortcutsProvider {
             intent: SettleUpIntent(),
             phrases: [
                 "Settle up in \(.applicationName)",
-                "Settle up with \(\.$friend) in \(.applicationName)",
-                "Pay \(\.$friend) in \(.applicationName)",
                 "Record a payment in \(.applicationName)",
                 "Clear my dues in \(.applicationName)"
             ],

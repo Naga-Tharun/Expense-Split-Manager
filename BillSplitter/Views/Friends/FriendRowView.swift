@@ -24,10 +24,7 @@ struct FriendRowView: View {
                     .font(.body)
                     .fontWeight(.medium)
 
-                if abs(balance) < BalanceCalculator.epsilon {
-                    Label("Settled up", systemImage: "checkmark.circle.fill")
-                        .font(.caption).foregroundColor(.green)
-                } else {
+                if abs(balance) >= BalanceCalculator.epsilon {
                     Text(balance > 0 ? "owes you" : "you owe")
                         .font(.caption).foregroundStyle(.secondary)
                 }
@@ -35,7 +32,10 @@ struct FriendRowView: View {
 
             Spacer()
 
-            if abs(balance) > BalanceCalculator.epsilon {
+            if abs(balance) < BalanceCalculator.epsilon {
+                Label("Settled up", systemImage: "checkmark.circle.fill")
+                    .font(.caption).foregroundColor(.green)
+            } else {
                 Text("\(CurrencyHelper.symbol)\(abs(balance), specifier: "%.2f")")
                     .font(.subheadline).fontWeight(.semibold)
                     .monospacedDigit()

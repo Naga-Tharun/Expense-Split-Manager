@@ -83,6 +83,15 @@ struct AddSplitView: View {
             .navigationDestination(for: Expense.self) { expense in
                 ExpenseDetailView(expense: expense)
             }
+            .onAppear {
+                // Handle pending deep link on appear (in case onChange fired before view was ready)
+                if let expenseID = deepLinkExpenseID,
+                   let expense = expenses.first(where: { $0.id == expenseID }) {
+                    navigationPath = NavigationPath()
+                    navigationPath.append(expense)
+                    deepLinkExpenseID = nil
+                }
+            }
             .onChange(of: deepLinkExpenseID) { _, newID in
                 guard let expenseID = newID,
                       let expense = expenses.first(where: { $0.id == expenseID }) else { return }

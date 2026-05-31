@@ -12,9 +12,17 @@ struct GroupsView: View {
     @State private var showingAddGroup = false
     @State private var saveError = SaveErrorState()
     @State private var pendingDelete: IndexSet? = nil
+    @State private var navigationPath = NavigationPath()
+
+    /// Deep link from Spotlight — when set, navigates to that group's detail.
+    @Binding var deepLinkGroupID: UUID?
+
+    init(deepLinkGroupID: Binding<UUID?> = .constant(nil)) {
+        _deepLinkGroupID = deepLinkGroupID
+    }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             SwiftUI.Group {
                 if groups.isEmpty {
                     ContentUnavailableView(
@@ -29,6 +37,27 @@ struct GroupsView: View {
                 }
             }
             .navigationTitle("Groups")
+            .navigationDestination(for: Group.self) { group in
+                GroupDetailView(group: group)
+            }
+            .navigationDestination(for: Expense.self) { expense in
+                ExpenseDetailView(expense: expense)
+            }
+            .onAppear {
+                if let groupID = deepLinkGroupID,
+                   let group = groups.first(where: { $0.id == groupID }) {
+                    navigationPath = NavigationPath()
+                    navigationPath.append(group)
+                    deepLinkGroupID = nil
+                }
+            }
+            .onChange(of: deepLinkGroupID) { _, newID in
+                guard let groupID = newID,
+                      let group = groups.first(where: { $0.id == groupID }) else { return }
+                navigationPath = NavigationPath()
+                navigationPath.append(group)
+                deepLinkGroupID = nil
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showingAddGroup.toggle() } label: {

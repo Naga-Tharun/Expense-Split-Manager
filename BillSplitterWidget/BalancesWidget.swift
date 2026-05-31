@@ -165,6 +165,6 @@ struct BalancesWidget: Widget {
         }
         .configurationDisplayName("Balances")
         .description("See who owes you and who you owe at a glance.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular])
     }
 }

@@ -11,6 +11,9 @@ import Foundation
 import os
 import UniformTypeIdentifiers
 
+// typealias so the compiler doesn't confuse SwiftData.Group with Swift.Group
+typealias ExpenseGroup = SchemaV1.Group
+
 private let logger = Logger(subsystem: "com.billsplitter", category: "spotlight")
 
 enum SpotlightIndexer {
@@ -20,18 +23,23 @@ enum SpotlightIndexer {
     /// Used to group all items by type for bulk deletion.
     private static let expenseDomain = "com.billsplitter.expense"
     private static let friendDomain  = "com.billsplitter.friend"
+    private static let groupDomain   = "com.billsplitter.group"
+
+    private static let bundleID = "project.ios.BillSplitter"
 
     // MARK: - Activity Types (for NSUserActivity engagement ranking)
 
     /// Activity types registered in Info.plist under NSUserActivityTypes.
     static let viewExpenseActivityType = "com.billsplitter.viewExpense"
     static let viewFriendActivityType  = "com.billsplitter.viewFriend"
+    static let viewGroupActivityType   = "com.billsplitter.viewGroup"
 
     // MARK: - Unique Identifier Helpers
 
     /// Builds a Spotlight unique ID from a domain + UUID.
     static func expenseID(_ uuid: UUID) -> String { "\(expenseDomain).\(uuid.uuidString)" }
     static func friendID(_ uuid: UUID) -> String  { "\(friendDomain).\(uuid.uuidString)" }
+    static func groupID(_ uuid: UUID) -> String   { "\(groupDomain).\(uuid.uuidString)" }
 
     // MARK: - Index Expenses
 
@@ -154,32 +162,87 @@ enum SpotlightIndexer {
         }
     }
 
+    // MARK: - Index Groups
+
+    /// Index a single group as a searchable item.
+    static func index(_ group: ExpenseGroup) {
+        let attributes = buildGroupAttributes(group)
+
+        let item = CSSearchableItem(
+            uniqueIdentifier: groupID(group.id),
+            domainIdentifier: groupDomain,
+            attributeSet: attributes
+        )
+        item.isUpdate = true
+        item.expirationDate = Calendar.current.date(byAdding: .day, value: 90, to: .now)
+
+        CSSearchableIndex.default().indexSearchableItems([item]) { error in
+            if let error {
+                logger.error("Failed to index group '\(group.name)': \(error.localizedDescription)")
+            }
+        }
+    }
+
+    /// Index multiple groups at once (used for bulk re-indexing).
+    static func indexAll(_ groups: [ExpenseGroup]) {
+        guard !groups.isEmpty else { return }
+
+        let items = groups.map { group -> CSSearchableItem in
+            let attributes = buildGroupAttributes(group)
+
+            let item = CSSearchableItem(
+                uniqueIdentifier: groupID(group.id),
+                domainIdentifier: groupDomain,
+                attributeSet: attributes
+            )
+            item.isUpdate = true
+            item.expirationDate = Calendar.current.date(byAdding: .day, value: 90, to: .now)
+            return item
+        }
+
+        CSSearchableIndex.default().indexSearchableItems(items) { error in
+            if let error {
+                logger.error("Failed to bulk index \(groups.count) groups: \(error.localizedDescription)")
+            } else {
+                logger.info("Indexed \(groups.count) groups in Spotlight")
+            }
+        }
+    }
+
+    /// Remove a single group from the index.
+    static func deindex(groupID uuid: UUID) {
+        CSSearchableIndex.default().deleteSearchableItems(withIdentifiers: [groupID(uuid)]) { error in
+            if let error {
+                logger.error("Failed to deindex group \(uuid): \(error.localizedDescription)")
+            }
+        }
+    }
+
     // MARK: - Bulk Operations
 
     /// Upsert all items into Spotlight on launch.
-    /// Uses `isUpdate = true` so existing items are refreshed in-place
-    /// without a destructive delete-then-add cycle.
-    static func reindexAll(expenses: [Expense], friends: [User]) {
+    static func reindexAll(expenses: [Expense], friends: [User], groups: [ExpenseGroup]) {
         indexAll(expenses)
         indexAll(friends)
+        indexAll(groups)
     }
 
-    /// Full wipe and re-index — call only after a data restore or migration,
-    /// NOT on every launch (use `reindexAll` for that).
-    static func forceReindexAll(expenses: [Expense], friends: [User]) {
-        CSSearchableIndex.default().deleteSearchableItems(withDomainIdentifiers: [expenseDomain, friendDomain]) { error in
+    /// Full wipe and re-index — call only after a data restore or migration.
+    static func forceReindexAll(expenses: [Expense], friends: [User], groups: [ExpenseGroup]) {
+        CSSearchableIndex.default().deleteSearchableItems(withDomainIdentifiers: [expenseDomain, friendDomain, groupDomain]) { error in
             if let error {
                 logger.error("Failed to clear Spotlight index: \(error.localizedDescription)")
                 return
             }
             indexAll(expenses)
             indexAll(friends)
+            indexAll(groups)
         }
     }
 
     /// Remove everything from the Spotlight index (used on Clear All Data).
     static func deleteAll() {
-        CSSearchableIndex.default().deleteSearchableItems(withDomainIdentifiers: [expenseDomain, friendDomain]) { error in
+        CSSearchableIndex.default().deleteSearchableItems(withDomainIdentifiers: [expenseDomain, friendDomain, groupDomain]) { error in
             if let error {
                 logger.error("Failed to clear Spotlight index: \(error.localizedDescription)")
             } else {
@@ -204,6 +267,21 @@ enum SpotlightIndexer {
         // Link activity to the CSSearchableItem so Spotlight deduplicates
         let attrs = buildExpenseAttributes(expense)
         attrs.relatedUniqueIdentifier = expenseID(expense.id)
+        activity.contentAttributeSet = attrs
+        return activity
+    }
+
+    /// Donate a user activity for viewing a group.
+    static func donateGroupActivity(_ group: ExpenseGroup) -> NSUserActivity {
+        let activity = NSUserActivity(activityType: viewGroupActivityType)
+        activity.title = group.name
+        activity.userInfo = [CSSearchableItemActivityIdentifier: groupID(group.id)]
+        activity.isEligibleForSearch = true
+        activity.isEligibleForPrediction = true
+        activity.persistentIdentifier = groupID(group.id)
+
+        let attrs = buildGroupAttributes(group)
+        attrs.relatedUniqueIdentifier = groupID(group.id)
         activity.contentAttributeSet = attrs
         return activity
     }
@@ -233,6 +311,7 @@ enum SpotlightIndexer {
         attributes.contentDescription = buildExpenseDescription(expense)
         attributes.keywords = buildExpenseKeywords(expense)
         attributes.rankingHint = rankingScore(for: expense)
+        attributes.creator = bundleID
         return attributes
     }
 
@@ -243,6 +322,26 @@ enum SpotlightIndexer {
         attributes.contentDescription = "Friend in BillSplitter"
         attributes.keywords = [friend.name, "friend", "BillSplitter", "balance", "split"]
         attributes.supportsNavigation = true
+        attributes.creator = bundleID
+        return attributes
+    }
+
+    private static func buildGroupAttributes(_ group: ExpenseGroup) -> CSSearchableItemAttributeSet {
+        let attributes = CSSearchableItemAttributeSet(contentType: .content)
+        attributes.title = group.name
+        attributes.displayName = group.name
+
+        let memberCount = group.members?.count ?? 0
+        let expenseCount = group.expenses?.count ?? 0
+        attributes.contentDescription = "\(memberCount) members \u{00B7} \(expenseCount) expenses"
+
+        var keywords: [String] = [group.name, "group", "BillSplitter"]
+        if let members = group.members {
+            keywords.append(contentsOf: members.map(\.name))
+        }
+        attributes.keywords = keywords
+        attributes.supportsNavigation = true
+        attributes.creator = bundleID
         return attributes
     }
 

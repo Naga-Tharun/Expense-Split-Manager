@@ -25,6 +25,7 @@
 	<array>
 		<string>com.billsplitter.viewExpense</string>
 		<string>com.billsplitter.viewFriend</string>
+		<string>com.billsplitter.viewGroup</string>
 	</array>
 </dict>
 </plist>

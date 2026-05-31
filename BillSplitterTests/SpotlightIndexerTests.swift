@@ -216,7 +216,7 @@ final class SpotlightIndexerTests: XCTestCase {
         let me = makeUser("Me")
         let friend = makeUser("Alice")
         let expense = makeExpense("Lunch", amount: 100, paidBy: me, participants: [(me, 50), (friend, 50)])
-        SpotlightIndexer.reindexAll(expenses: [expense], friends: [friend])
+        SpotlightIndexer.reindexAll(expenses: [expense], friends: [friend], groups: [])
     }
 
     func testDeindexDoesNotCrash() {
@@ -427,11 +427,11 @@ final class SpotlightIndexerTests: XCTestCase {
         let me = makeUser("Me")
         let friend = makeUser("Bob")
         let expense = makeExpense("Test", amount: 50, paidBy: me, participants: [(me, 25), (friend, 25)])
-        SpotlightIndexer.forceReindexAll(expenses: [expense], friends: [friend])
+        SpotlightIndexer.forceReindexAll(expenses: [expense], friends: [friend], groups: [])
     }
 
     func testForceReindexAllWithEmptyArrays() {
-        SpotlightIndexer.forceReindexAll(expenses: [], friends: [])
+        SpotlightIndexer.forceReindexAll(expenses: [], friends: [], groups: [])
     }
 
     // ================================================================

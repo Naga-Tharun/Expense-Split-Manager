@@ -11,6 +11,7 @@ struct MainTabView: View {
     @State private var selectedTab = 2
     @State private var deepLinkFriendID: UUID?
     @State private var deepLinkExpenseID: UUID?
+    @State private var deepLinkGroupID: UUID?
 
     /// Tab indices — avoids magic numbers scattered across the file.
     private enum Tab: Int {
@@ -19,7 +20,7 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            GroupsView()
+            GroupsView(deepLinkGroupID: $deepLinkGroupID)
                 .tabItem { Label("Groups",    systemImage: "person.3.fill") }.tag(Tab.groups.rawValue)
             FriendsView(deepLinkFriendID: $deepLinkFriendID)
                 .tabItem { Label("Friends",   systemImage: "person.2.fill") }.tag(Tab.friends.rawValue)
@@ -53,6 +54,12 @@ struct MainTabView: View {
                 deepLinkExpenseID = expenseID
             }
             selectedTab = Tab.activity.rawValue
+        } else if identifier.hasPrefix("com.billsplitter.group.") {
+            let uuidString = String(identifier.dropFirst("com.billsplitter.group.".count))
+            if let groupID = UUID(uuidString: uuidString) {
+                deepLinkGroupID = groupID
+            }
+            selectedTab = Tab.groups.rawValue
         } else if identifier.hasPrefix("com.billsplitter.friend.") {
             // Extract friend UUID from identifier: "com.billsplitter.friend.<UUID>"
             let uuidString = String(identifier.dropFirst("com.billsplitter.friend.".count))

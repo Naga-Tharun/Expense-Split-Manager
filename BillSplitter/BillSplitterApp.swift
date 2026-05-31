@@ -63,7 +63,8 @@ struct BillSplitterApp: App {
         let expenses = (try? context.fetch(FetchDescriptor<Expense>())) ?? []
         let allUsers = (try? context.fetch(FetchDescriptor<User>())) ?? []
         let friends  = allUsers.filter { $0.id != CurrentUserManager.currentUserID }
-        SpotlightIndexer.reindexAll(expenses: expenses, friends: friends)
+        let groups   = (try? context.fetch(FetchDescriptor<Group>())) ?? []
+        SpotlightIndexer.reindexAll(expenses: expenses, friends: friends, groups: groups)
     }
 
     var body: some Scene {

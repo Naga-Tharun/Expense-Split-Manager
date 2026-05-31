@@ -100,6 +100,10 @@ struct AddFriendView: View {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { return }
 
+        // Reset validation before save so the @Query update
+        // doesn't briefly trigger a "name already exists" error
+        nameTouched = false
+
         saveError.perform {
             try DataService.addFriend(name: trimmedName, profileColor: selectedColorHex, context: modelContext)
         }

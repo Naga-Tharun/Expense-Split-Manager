@@ -159,6 +159,10 @@ struct AddGroupView: View {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
+        // Reset validation before save so the @Query update
+        // doesn't briefly trigger a "name already exists" error
+        nameTouched = false
+
         let newGroup = Group(
             name: trimmed,
             groupDescription: description.isEmpty ? nil : description,
