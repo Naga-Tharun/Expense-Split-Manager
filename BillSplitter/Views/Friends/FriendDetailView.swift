@@ -14,7 +14,8 @@ struct FriendDetailView: View {
     @Query private var settlements:  [Settlement]
     @Query(sort: \User.name) private var allUsers: [User]
 
-    @State private var showSettleUp = false
+    @State private var showSettleUp  = false
+    @State private var showEditFriend = false
 
     // Search & filter state
     @State private var searchText      = ""
@@ -79,11 +80,20 @@ struct FriendDetailView: View {
         .onAppear { refreshCache() }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                if balance < -BalanceCalculator.epsilon {
-                    Button("Settle Up") { showSettleUp = true }
-                        .fontWeight(.semibold).tint(.cyan)
+                HStack(spacing: 12) {
+                    ExportButton(expenses: sharedExpenses, scope: .friend(friend))
+                    Button { showEditFriend = true } label: {
+                        Image(systemName: "pencil.circle")
+                    }
+                    if balance < -BalanceCalculator.epsilon {
+                        Button("Settle Up") { showSettleUp = true }
+                            .fontWeight(.semibold).tint(.cyan)
+                    }
                 }
             }
+        }
+        .sheet(isPresented: $showEditFriend) {
+            EditFriendView(friend: friend)
         }
         .sheet(isPresented: $showSettleUp) {
             SettleUpView(from: currentUser, to: friend, amount: abs(balance))
@@ -126,6 +136,16 @@ struct FriendDetailView: View {
                         }
                         .buttonStyle(.borderedProminent).tint(.cyan)
                     }
+                }
+
+                if !sharedExpenses.isEmpty {
+                    SettlementShareButton(
+                        friend: friend,
+                        balance: balance,
+                        sharedExpenses: sharedExpenses,
+                        settlements: settlements,
+                        currentUserName: currentUser?.name ?? "You"
+                    )
                 }
 
                 HStack(spacing: 24) {

@@ -7,6 +7,12 @@ import SwiftUI
 import SwiftData
 import UIKit
 
+/// Wrapper to make Int usable with `.fullScreenCover(item:)`.
+struct IdentifiableInt: Identifiable {
+    let id = UUID()
+    let value: Int
+}
+
 struct ExpenseDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss)      private var dismiss
@@ -16,7 +22,7 @@ struct ExpenseDetailView: View {
 
     @State private var showDeleteAlert  = false
     @State private var showEditSheet   = false
-    @State private var showReceiptFull = false
+    @State private var fullScreenReceiptIndex: IdentifiableInt? = nil
     @State private var saveError       = SaveErrorState()
 
     private var currentUserID: UUID? { CurrentUserManager.currentUserID }
@@ -36,11 +42,11 @@ struct ExpenseDetailView: View {
         List {
             headerSection
             detailsSection
-            if let data = expense.receiptImageData, let uiImage = UIImage(data: data) {
-                receiptSection(uiImage)
-            }
             if let participants = expense.participants, !participants.isEmpty {
                 splitSection(participants)
+            }
+            if !expense.receiptImages.isEmpty {
+                receiptsSection
             }
             deleteSection
         }
@@ -58,24 +64,11 @@ struct ExpenseDetailView: View {
             }
         }
         .sheet(isPresented: $showEditSheet) { EditExpenseView(expense: expense) }
-        .fullScreenCover(isPresented: $showReceiptFull) {
-            if let data = expense.receiptImageData, let uiImage = UIImage(data: data) {
-                ZStack(alignment: .topTrailing) {
-                    Color.black.ignoresSafeArea()
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    Button {
-                        showReceiptFull = false
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title)
-                            .foregroundStyle(.white.opacity(0.8))
-                            .padding()
-                    }
-                }
-            }
+        .fullScreenCover(item: $fullScreenReceiptIndex) { wrapper in
+            ReceiptGalleryView(
+                images: expense.receiptImages,
+                initialIndex: min(wrapper.value, expense.receiptImages.count - 1)
+            )
         }
         .alert("Delete Expense?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) {
@@ -146,22 +139,30 @@ struct ExpenseDetailView: View {
         }
     }
 
-    @ViewBuilder
-    private func receiptSection(_ uiImage: UIImage) -> some View {
-        Section("Receipt") {
-            Button { showReceiptFull = true } label: {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxHeight: 200)
-                    .frame(maxWidth: .infinity)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                    )
+    private var receiptsSection: some View {
+        Section("Receipts (\(expense.receiptImages.count))") {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(Array(expense.receiptImages.enumerated()), id: \.offset) { index, data in
+                        if let uiImage = UIImage(data: data) {
+                            Button { fullScreenReceiptIndex = IdentifiableInt(value: index) } label: {
+                                Image(uiImage: uiImage)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 120, height: 160)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .padding(.vertical, 6)
             }
-            .buttonStyle(.plain)
+            .listRowInsets(.init(top: 4, leading: 16, bottom: 4, trailing: 16))
             .listRowBackground(Color.clear)
         }
     }

@@ -116,12 +116,18 @@ struct EditGroupView: View {
                             ForEach(colorOptions, id: \.self) { hex in
                                 Button {
                                     selectedColorHex = hex
-                                    selectedColor = Color(hex: hex)
                                 } label: {
                                     Circle().fill(Color(hex: hex)).frame(width: 32, height: 32)
+                                        .overlay(
+                                            selectedColorHex == hex
+                                                ? AnyView(Image(systemName: "checkmark")
+                                                    .font(.system(size: 14, weight: .bold))
+                                                    .foregroundStyle(.white))
+                                                : AnyView(EmptyView())
+                                        )
                                         .overlay(Circle().stroke(
-                                            selectedColorHex == hex ? Color(hex: hex) : Color(.quaternaryLabel),
-                                            lineWidth: selectedColorHex == hex ? 3 : 1))
+                                            selectedColorHex == hex ? .white.opacity(0.6) : Color(.quaternaryLabel),
+                                            lineWidth: selectedColorHex == hex ? 2.5 : 1))
                                 }
                                 .buttonStyle(.plain)
                             }

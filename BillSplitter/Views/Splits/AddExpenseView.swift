@@ -27,9 +27,10 @@ struct AddExpenseView: View {
     @State private var customAmounts:  [UUID: String]    = [:]
     @State private var percentages:    [UUID: String]    = [:]
     @State private var selectedPayerID: UUID?   = nil
-    @State private var selectedPhoto: PhotosPickerItem? = nil
-    @State private var receiptImageData: Data?  = nil
+    @State private var selectedPhotos: [PhotosPickerItem] = []
+    @State private var receiptImages: [Data]     = []
     @State private var isLoadingImage           = false
+    @State private var showCamera              = false
     @State private var saveError                = SaveErrorState()
     @State private var showSuccess              = false
     @State private var editedFields: Set<String> = []
@@ -112,9 +113,10 @@ struct AddExpenseView: View {
                 }
                 ExpenseFormSections.notesSection(notes: $notes)
                 ExpenseFormSections.receiptSection(
-                    selectedPhoto: $selectedPhoto,
-                    receiptImageData: $receiptImageData,
-                    isLoadingImage: $isLoadingImage
+                    selectedPhotos: $selectedPhotos,
+                    receiptImages: $receiptImages,
+                    isLoadingImage: $isLoadingImage,
+                    showCamera: $showCamera
                 )
             }
             .scrollDismissesKeyboard(.interactively)
@@ -136,6 +138,29 @@ struct AddExpenseView: View {
             }
             .saveErrorAlert($saveError)
             .successOverlay(isPresented: $showSuccess, message: "Expense Added") { dismiss() }
+            .sheet(isPresented: $showCamera) {
+                if CameraAccess.isAvailable {
+                    CameraPicker(receiptImages: $receiptImages)
+                        .ignoresSafeArea()
+                }
+            }
+            .onChange(of: selectedPhotos) { _, newItems in
+                guard !newItems.isEmpty else { return }
+                isLoadingImage = true
+                Task { @MainActor in
+                    for item in newItems {
+                        guard let data = try? await item.loadTransferable(type: Data.self),
+                              !data.isEmpty,
+                              let uiImage = UIImage(data: data),
+                              uiImage.size.width > 0, uiImage.size.height > 0,
+                              let jpeg = uiImage.jpegData(compressionQuality: 0.7)
+                        else { continue }
+                        receiptImages.append(jpeg)
+                    }
+                    isLoadingImage = false
+                    selectedPhotos.removeAll()
+                }
+            }
         }
     }
 
@@ -153,7 +178,7 @@ struct AddExpenseView: View {
             splitType: splitType
         )
 
-        expense.receiptImageData = receiptImageData
+        expense.receiptImages = receiptImages
 
         if let payerID = selectedPayerID,
            let payer = allUsers.first(where: { $0.id == payerID }) {

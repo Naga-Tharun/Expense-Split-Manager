@@ -80,6 +80,11 @@ struct AddSplitView: View {
                 Haptics.light()
             }
             .navigationTitle("Activity")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    ExportButton(expenses: expenses, scope: .all)
+                }
+            }
             .navigationDestination(for: Expense.self) { expense in
                 ExpenseDetailView(expense: expense)
             }

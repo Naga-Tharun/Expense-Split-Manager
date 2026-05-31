@@ -19,6 +19,7 @@ struct GroupDetailView: View {
     @State private var showSettleUp   = false
     @State private var showEditGroup  = false
     @State private var saveError      = SaveErrorState()
+    @State private var previewFile: IdentifiableURL?
 
     // Member removal with settle warning
     @State private var pendingRemoveMember: User?
@@ -100,6 +101,23 @@ struct GroupDetailView: View {
                     Button { showSettleUp = true } label: {
                         Label("Settle Up", systemImage: "arrow.left.arrow.right.circle.fill")
                     }
+                    if !groupExpenses.isEmpty {
+                        Divider()
+                        Button {
+                            if let url = ExportService.csvFile(from: groupExpenses, scope: .group(group)) {
+                                previewFile = IdentifiableURL(url: url)
+                            }
+                        } label: {
+                            Label("Export CSV", systemImage: "tablecells")
+                        }
+                        Button {
+                            if let url = ExportService.pdfFile(from: groupExpenses, scope: .group(group), currencySymbol: CurrencyHelper.symbol) {
+                                previewFile = IdentifiableURL(url: url)
+                            }
+                        } label: {
+                            Label("Export PDF", systemImage: "doc.richtext")
+                        }
+                    }
                 } label: { Image(systemName: "ellipsis.circle") }
             }
         }
@@ -122,6 +140,9 @@ struct GroupDetailView: View {
             if let member = pendingRemoveMember {
                 Text("\(member.name) has an unsettled balance of \(CurrencyHelper.formattedAbs(unsettledAmount)). Please settle up before removing them from the group.")
             }
+        }
+        .sheet(item: $previewFile) { file in
+            FilePreviewSheet(url: file.url)
         }
         .saveErrorAlert($saveError)
     }

@@ -385,82 +385,94 @@ struct ExpenseFormSections {
         }
     }
 
-    // MARK: - Receipt Section
+    // MARK: - Receipt Section (multiple images)
+    //
+    // NOTE: Camera and photo-picker presentations are handled by the
+    // PARENT view (AddExpenseView / EditExpenseView) to avoid the
+    // "already presenting" crash when this section lives inside a sheet.
 
     @ViewBuilder
     static func receiptSection(
-        selectedPhoto: Binding<PhotosPickerItem?>,
-        receiptImageData: Binding<Data?>,
-        isLoadingImage: Binding<Bool>
+        selectedPhotos: Binding<[PhotosPickerItem]>,
+        receiptImages: Binding<[Data]>,
+        isLoadingImage: Binding<Bool>,
+        showCamera: Binding<Bool>
     ) -> some View {
-        Section("Receipt (optional)") {
-            if let data = receiptImageData.wrappedValue,
-               let uiImage = UIImage(data: data) {
-                VStack(spacing: 10) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxHeight: 200)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                        )
+        Section("Receipts (optional)") {
+            // Existing images
+            if !receiptImages.wrappedValue.isEmpty {
+                ForEach(Array(receiptImages.wrappedValue.enumerated()), id: \.offset) { index, data in
+                    if let uiImage = UIImage(data: data) {
+                        HStack(spacing: 12) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 80, height: 80)
+                                .clipped()
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                                )
 
-                    HStack(spacing: 16) {
-                        PhotosPicker(selection: selectedPhoto, matching: .images) {
-                            Label("Replace", systemImage: "arrow.triangle.2.circlepath.camera")
-                                .font(.subheadline)
-                        }
-                        .buttonStyle(.bordered).tint(.cyan)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Receipt \(index + 1)")
+                                    .font(.subheadline).fontWeight(.medium)
+                                let kb = data.count / 1024
+                                Text("\(kb) KB")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
 
-                        Button(role: .destructive) {
-                            receiptImageData.wrappedValue = nil
-                            selectedPhoto.wrappedValue = nil
-                        } label: {
-                            Label("Remove", systemImage: "trash")
-                                .font(.subheadline)
+                            Spacer()
+
+                            Button(role: .destructive) {
+                                withAnimation {
+                                    _ = receiptImages.wrappedValue.remove(at: index)
+                                }
+                            } label: {
+                                Image(systemName: "trash")
+                                    .font(.subheadline)
+                            }
+                            .buttonStyle(.borderless)
                         }
-                        .buttonStyle(.bordered)
+                        .padding(.vertical, 2)
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
-                .listRowBackground(Color.clear)
-            } else if isLoadingImage.wrappedValue {
+            }
+
+            if isLoadingImage.wrappedValue {
                 HStack {
                     Spacer()
                     ProgressView("Loading image…")
                     Spacer()
                 }
                 .padding(.vertical, 10)
-            } else {
-                PhotosPicker(selection: selectedPhoto, matching: .images) {
-                    Label("Attach Receipt Photo", systemImage: "camera.fill")
+            }
+
+            // Add more buttons
+            VStack(spacing: 10) {
+                if CameraAccess.isAvailable {
+                    Button {
+                        showCamera.wrappedValue = true
+                    } label: {
+                        Label("Take Photo", systemImage: "camera.fill")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
+                    .buttonStyle(.bordered).tint(.cyan)
+                }
+
+                PhotosPicker(
+                    selection: selectedPhotos,
+                    maxSelectionCount: 10,
+                    matching: .images
+                ) {
+                    Label("Choose from Library", systemImage: "photo.on.rectangle")
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
-                .buttonStyle(.bordered).tint(.cyan)
-                .padding(.vertical, 4)
+                .buttonStyle(.bordered)
+                .tint(CameraAccess.isAvailable ? .secondary : .cyan)
             }
-        }
-        .onChange(of: selectedPhoto.wrappedValue) { _, newItem in
-            guard let newItem else { return }
-            isLoadingImage.wrappedValue = true
-            Task {
-                if let data = try? await newItem.loadTransferable(type: Data.self) {
-                    // Compress to JPEG to save storage
-                    if let uiImage = UIImage(data: data),
-                       let jpeg = uiImage.jpegData(compressionQuality: 0.7) {
-                        receiptImageData.wrappedValue = jpeg
-                        isLoadingImage.wrappedValue = false
-                    } else {
-                        receiptImageData.wrappedValue = data
-                        isLoadingImage.wrappedValue = false
-                    }
-                } else {
-                    isLoadingImage.wrappedValue = false
-                }
-            }
+            .padding(.vertical, 4)
         }
     }
 

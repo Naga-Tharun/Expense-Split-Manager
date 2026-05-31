@@ -31,9 +31,10 @@ struct EditExpenseView: View {
     @State private var selectedPayerID:        UUID?
     @State private var customAmounts:          [UUID: String]
     @State private var percentages:            [UUID: String]
-    @State private var selectedPhoto: PhotosPickerItem? = nil
-    @State private var receiptImageData: Data?
+    @State private var selectedPhotos: [PhotosPickerItem] = []
+    @State private var receiptImages: [Data]
     @State private var isLoadingImage = false
+    @State private var showCamera    = false
     @State private var saveError      = SaveErrorState()
     @State private var showSuccess    = false
     @State private var editedFields: Set<String> = []
@@ -51,7 +52,7 @@ struct EditExpenseView: View {
         _splitType          = State(initialValue: expense.splitType)
         _selectedGroupID    = State(initialValue: expense.group?.id)
         _selectedPayerID    = State(initialValue: expense.paidBy?.id)
-        _receiptImageData   = State(initialValue: expense.receiptImageData)
+        _receiptImages      = State(initialValue: expense.receiptImages)
 
         let participantIDs = Set(
             (expense.participants ?? []).compactMap { $0.friend?.id }
@@ -151,9 +152,10 @@ struct EditExpenseView: View {
                 }
                 ExpenseFormSections.notesSection(notes: $notes)
                 ExpenseFormSections.receiptSection(
-                    selectedPhoto: $selectedPhoto,
-                    receiptImageData: $receiptImageData,
-                    isLoadingImage: $isLoadingImage
+                    selectedPhotos: $selectedPhotos,
+                    receiptImages: $receiptImages,
+                    isLoadingImage: $isLoadingImage,
+                    showCamera: $showCamera
                 )
             }
             .scrollDismissesKeyboard(.interactively)
@@ -176,10 +178,31 @@ struct EditExpenseView: View {
             .saveErrorAlert($saveError)
             .successOverlay(isPresented: $showSuccess, message: "Saved") { dismiss() }
             .onAppear {
-                // The Paid By picker tags currentUser as nil, so normalise
-                // the stored payer ID to nil when it matches the current user.
                 if selectedPayerID == currentUser?.id {
                     selectedPayerID = nil
+                }
+            }
+            .sheet(isPresented: $showCamera) {
+                if CameraAccess.isAvailable {
+                    CameraPicker(receiptImages: $receiptImages)
+                        .ignoresSafeArea()
+                }
+            }
+            .onChange(of: selectedPhotos) { _, newItems in
+                guard !newItems.isEmpty else { return }
+                isLoadingImage = true
+                Task { @MainActor in
+                    for item in newItems {
+                        guard let data = try? await item.loadTransferable(type: Data.self),
+                              !data.isEmpty,
+                              let uiImage = UIImage(data: data),
+                              uiImage.size.width > 0, uiImage.size.height > 0,
+                              let jpeg = uiImage.jpegData(compressionQuality: 0.7)
+                        else { continue }
+                        receiptImages.append(jpeg)
+                    }
+                    isLoadingImage = false
+                    selectedPhotos.removeAll()
                 }
             }
         }
@@ -194,7 +217,7 @@ struct EditExpenseView: View {
         expense.date               = date
         expense.notes              = notes.isEmpty ? nil : notes
         expense.splitType          = splitType
-        expense.receiptImageData   = receiptImageData
+        expense.receiptImages      = receiptImages
 
         // Always set paidBy explicitly
         if let payerID = selectedPayerID,

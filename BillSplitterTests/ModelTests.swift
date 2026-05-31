@@ -84,6 +84,7 @@ final class ModelTests: XCTestCase {
         XCTAssertNil(e.notes)
         XCTAssertNil(e.paidBy)
         XCTAssertNil(e.group)
+        XCTAssertTrue(e.receiptImages.isEmpty)
     }
 
     func testExpenseInitCustomValues() {
@@ -315,6 +316,58 @@ final class ModelTests: XCTestCase {
 
         XCTAssertEqual(g.expenses?.count, 1)
         XCTAssertEqual(g.expenses?.first?.expenseDescription, "Hotel")
+    }
+
+    // ================================================================
+    // MARK: - Receipt Images
+    // ================================================================
+
+    func testExpenseReceiptImagesStartEmpty() {
+        let e = Expense(expenseDescription: "Coffee", amount: 5)
+        context.insert(e)
+        try? context.save()
+        XCTAssertTrue(e.receiptImages.isEmpty)
+    }
+
+    func testExpenseStoresMultipleReceiptImages() {
+        let e = Expense(expenseDescription: "Dinner", amount: 100)
+        context.insert(e)
+        let image1 = Data(repeating: 0xFF, count: 64)
+        let image2 = Data(repeating: 0xAA, count: 128)
+        e.receiptImages = [image1, image2]
+        try? context.save()
+
+        XCTAssertEqual(e.receiptImages.count, 2)
+        XCTAssertEqual(e.receiptImages[0].count, 64)
+        XCTAssertEqual(e.receiptImages[1].count, 128)
+    }
+
+    func testExpenseReceiptImageAppend() {
+        let e = Expense(expenseDescription: "Taxi", amount: 50)
+        context.insert(e)
+        e.receiptImages.append(Data(repeating: 0x01, count: 32))
+        e.receiptImages.append(Data(repeating: 0x02, count: 48))
+        try? context.save()
+
+        XCTAssertEqual(e.receiptImages.count, 2)
+    }
+
+    func testExpenseReceiptImageRemoval() {
+        let e = Expense(expenseDescription: "Hotel", amount: 500)
+        context.insert(e)
+        e.receiptImages = [
+            Data(repeating: 0x01, count: 10),
+            Data(repeating: 0x02, count: 20),
+            Data(repeating: 0x03, count: 30)
+        ]
+        try? context.save()
+
+        e.receiptImages.remove(at: 1)
+        try? context.save()
+
+        XCTAssertEqual(e.receiptImages.count, 2)
+        XCTAssertEqual(e.receiptImages[0].count, 10)
+        XCTAssertEqual(e.receiptImages[1].count, 30)
     }
 
     // ================================================================

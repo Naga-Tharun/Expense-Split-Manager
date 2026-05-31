@@ -19,6 +19,8 @@
 			<string>Editor</string>
 		</dict>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>BillSplitter uses the camera to capture receipt photos for your expenses.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict/>
 	<key>NSUserActivityTypes</key>

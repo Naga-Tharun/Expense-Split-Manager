@@ -20,7 +20,7 @@ extension SchemaV1 {
         @Attribute(originalName: "category") var categoryRaw: String
         var date: Date
         var notes: String?
-        @Attribute(.externalStorage) var receiptImageData: Data?
+        @Attribute(.externalStorage) var receiptImages: [Data]
 
         // Who paid
         var paidBy: User?
@@ -60,6 +60,7 @@ extension SchemaV1 {
             self.date = date
             self.notes = notes
             self.splitTypeRaw = splitType.rawValue
+            self.receiptImages = []
         }
     }
 }
